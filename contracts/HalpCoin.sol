@@ -27,42 +27,49 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   uint256 _totalSupply;
   mapping (address => uint256) private _balances;
 
-  struct StakedWallet {
+  struct StakeDetails {
     uint stakeTime;
     bool currentlyStaked;
     address currentVote;
   }
 
   //TODO: needs initialization, don't use 0 index
-  StakedWallet[] public staked;
+  StakeDetails[] public staked;
   mapping(address => uint) private stakedWalletIndices;
 
+  mapping(address => uint256) private voteCounts;
+  //TODO: needs initialization
+  address[] private voteIterator;
+  mapping(address => bool) walletWasVotedFor;
+  address currentCharityWallet;
+  
+
   function getStakedWallets() public view returns (uint[] memory) {
-      uint[] memory result = new uint[](staked.length - 1);
-      uint counter = 0;
-      
-      for (uint i = 1; i < staked.length; i++) {
-          if (staked[i].currentlyStaked == true) {
-              result[counter] = i;
-              counter++;
-          }
+    uint[] memory result = new uint[](staked.length - 1);
+    uint counter = 0;
+
+    for (uint i = 1; i < staked.length; i++) {
+      if (staked[i].currentlyStaked == true) {
+        result[counter] = i;
+        counter++;
       }
-      return result;
+    }
+    return result;
   }
 
 
-  function stake() public returns (bool) {
+  function stakeWallet() public returns (bool) {
     address sender = msg.sender;
     require(_canStake(sender), "Wallet needs sufficient funds to stake");
 
     uint stakeIndex = stakedWalletIndices[sender]; 
     if (stakeIndex != 0) {
-      staked.push(StakedWallet(stakeTime: block.timestamp, currentlyStaked: true}));
+      staked.push(StakeDetails(stakeTime: block.timestamp, currentlyStaked: true}));
       //TODO: off by one error?
       stakedWalletIndices[sender] = staked.length;
     }
     else {
-      StakedWallet storage oldStake = staked[stakeIndex];
+      StakeDetails storage oldStake = staked[stakeIndex];
       oldStake.stakeTime = block.timestamp;
       oldStake.currentlyStaked = true;
       oldStake.currentVote = address(0);
@@ -71,42 +78,94 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     return true;
   }
 
-  //function unstake() public {
-  //TODO:
-  //  ensure stakeTime is sufficiently past
-  //  if (voted)
-  //    remove vote weight from currentVote
-  //    updateCharityWallet()
-  //  reifyYield
-  //  set staked to false
+  function unstake() public {
+    address sender = msg.sender;
 
-  //function vote(address charityWallet) public {
-  //TODO:
-  //  ensure staked
-  //  reifyYield
-  //  somehow add wallet weight to address 
-  //  track currentVote
-  //  updateCharityWallet()
+    uint stakeIndex = stakedWalletIndices[sender]; 
 
-  //function updateCharityWallet
-  //TODO: ??????????
-  //  maybe can be broken into 3 functions
-  //    addVote
-  //    recalculateCharityWallet
-  //    removeVote
+    require(stakeIndex != 0);
+
+    StakeDetails storage sDetails = staked[stakeIndex];
+
+    require(sDetails.currentlyStaked);
+
+    //TODO: ensure enough time passed (use better math)
+    require(sDetails.stakeTime > 2000)
+
+    if (sDetails.currentVote != address(0)) {
+      voteCounts[sDetails.currentVote] = voteCounts[sDetails.currentVote].sub(balances[sender]);
+    }
+    reifyYield(sender);
+
+    sDetails.currentlyStaked = false;
+  }
+
+  function vote(address charityWallet) public {
+    address sender = msg.sender;
+
+    uint stakeIndex = stakedWalletIndices[sender]; 
+
+    StakeDetails storage sDetails = staked[stakeIndex];
+
+    require(sDetails.currentlyStaked);
+
+    //TODO: ensure enough time passed (use better math)
+    require(sDetails.stakeTime > 2000)
+
+    if (sDetails.currentVote != address(0)) {
+      voteCounts[sDetails.currentVote] = voteCounts[sDetails.currentVote].sub(balances[sender]);
+    }
+    reifyYield(sender);
+
+    if (!walletWasVotedFor[charityWallet]) {
+      voteIterator.push(charityWallet);
+      walletWasVotedFor[charityWallet] = true;
+    }
+
+    voteCounts[charityWallet] = voteCounts[charityWallet].add(balances[sender]);
+
+    sDetails.currentVote = charityWallet;
+
+    updateCharityWallet();
+  }
+
+  function updateCharityWallet() public {
+    uint256 maxVoteValue = 0; 
+    address winner = address(0);
+
+    for (uint i = 0; i < voteIterator.length; i++) {
+      address memory currentWallet = voteIterator[i];
+      uint256 voteValue = voteCounts[currentWallet];
+
+      //TODO: consider implication of zero vote value
+
+      if (voteValue > maxVoteValue) {
+        maxVoteValue = voteValue;
+        winner = currentWallet;
+      }
+    }
+
+    //TODO: might this make something throw on unvote?
+    require(winner != address(0));
+
+    currentCharityWallet = winner;
+  }
+
   //  removeVote must call recalculateCharityWallet, but addVote doesn't have to
   //  a delegate system might be able to optimize it somewhat
 
-  function getYield(StakedWallet memory stakedWallet) public pure returns (uint256) {
+  function getYield(StakeDetails memory stakedWallet) public pure returns (uint256) {
     //TODO: calculate interest based on time since staking
     return 0;
   }
 
+  //TODO: the problem with this being public is that since reifyYield updates stakeTime,
+  //      another user could prevent someone from unstaking maliciously
   function reifyYield(address wallet) public {
     uint wasStaked = stakedWalletIndices[wallet];
     require(wasStaked != 0);
 
-    StakedWallet storage stakedWallet = staked[wasStaked];
+    StakeDetails storage stakedWallet = staked[wasStaked];
     require(stakedWallet.currentlyStaked == true);
 
     uint yield = getYield(stakedWallet);
@@ -115,8 +174,9 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     stakedWallet.stakeTime = block.timestamp;
 
-    _balances[wallet] = _balances[wallet].add(yield);
-    _balances[charityWallet] = _balances[charityWallet].add(yield);
+    balances[wallet] = balances[wallet].add(yield);
+    //TODO: figure out how to divide yield
+    //balances[charityWallet] = balances[charityWallet].add(yield);
   }
 
   function _canStake(address wallet) private view returns (bool) {
