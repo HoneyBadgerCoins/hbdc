@@ -28,7 +28,6 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   mapping (address => uint256) private _balances;
 
   struct StakedWallet {
-    address owner;
     uint stakeTime;
     bool currentlyStaked;
     address currentVote;
@@ -58,7 +57,9 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     uint stakeIndex = stakedWalletIndices[sender]; 
     if (stakeIndex != 0) {
-      staked.push(StakedWallet({owner: sender, stakeTime: block.timestamp, currentlyStaked: true}));
+      staked.push(StakedWallet(stakeTime: block.timestamp, currentlyStaked: true}));
+      //TODO: off by one error?
+      stakedWalletIndices[sender] = staked.length;
     }
     else {
       StakedWallet storage oldStake = staked[stakeIndex];
@@ -119,7 +120,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   }
 
   function _canStake(address wallet) private view returns (bool) {
-    //requires certain portion of totalSupply
+    //TODO: requires certain portion of totalSupply
     return false;
   }
 
