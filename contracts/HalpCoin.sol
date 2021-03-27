@@ -34,7 +34,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     address currentVote;
   }
 
-  //needs initialization, don't use 0 index
+  //TODO: needs initialization, don't use 0 index
   StakedWallet[] public staked;
   mapping(address => uint) private stakedWalletIndices;
 
