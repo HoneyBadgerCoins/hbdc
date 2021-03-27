@@ -78,7 +78,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     require(wasStaked != 0);
 
     StakedWallet storage stakedWallet = staked[wasStaked];
-    require(stakedWallet.currentlyStaked = true);
+    require(stakedWallet.currentlyStaked == true);
 
     uint yield = getYield(stakedWallet);
 
