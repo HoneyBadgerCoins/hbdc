@@ -8,24 +8,20 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
  
 contract HalpCoin is IERC20Upgradeable, Initializable {
+<<<<<<< HEAD
 
   uint256 _totalSupply;
   string private _name;
   string private _symbol;
 
-  function initialize() initializer public {
-    _name = 'HalpCoin';
-    _symbol = 'HALP';
-    _totalSupply = 10000000;
-  }
-
   mapping (address => uint256) private _balances;
-
+  mapping (address => mapping (address => uint256)) private _allowances;
+=======
   using SafeMathUpgradeable for uint256;
   using AddressUpgradeable for address;
 
   uint256 _totalSupply;
-  mapping (address => uint256) private _balances;
+  mapping (address => uint256) private balances;
 
   struct StakedWallet {
     address owner;
@@ -86,13 +82,20 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     stakedWallet.stakeTime = block.timestamp;
 
-    _balances[wallet] = _balances[wallet].add(yield);
-    _balances[charityWallet] = _balances[charityWallet].add(yield);
+    balances[wallet] = balances[wallet].add(yield);
+    //balances[charityWallet] = balances[charityWallet].add(yield);
   }
 
   function _canStake(address wallet) private view returns (bool) {
     //requires certain portion of totalSupply
     return false;
+  }
+>>>>>>> get started with staking logic
+
+  function initialize() initializer public {
+    _name = 'HalpCoin';
+    _symbol = 'HALP';
+    _totalSupply = 10000000;
   }
 
   function name() external view returns (string memory) {
@@ -177,4 +180,5 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     _approve(msg.sender, spender, currentAllowance - subtractedValue);
     return true;
   }
+
 }
