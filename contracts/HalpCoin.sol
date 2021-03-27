@@ -31,6 +31,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     address owner;
     uint stakeTime;
     bool currentlyStaked;
+    address currentVote;
   }
 
   //needs initialization, don't use 0 index
@@ -57,19 +58,46 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     uint stakeIndex = stakedWalletIndices[sender]; 
     if (stakeIndex != 0) {
-      //create new StakedWallet
       staked.push(StakedWallet({owner: sender, stakeTime: block.timestamp, currentlyStaked: true}));
     }
     else {
       StakedWallet storage oldStake = staked[stakeIndex];
       oldStake.stakeTime = block.timestamp;
       oldStake.currentlyStaked = true;
+      oldStake.currentVote = address(0);
     }
 
     return true;
   }
 
+  //function unstake() public {
+  //TODO:
+  //  ensure stakeTime is sufficiently past
+  //  if (voted)
+  //    remove vote weight from currentVote
+  //    updateCharityWallet()
+  //  reifyYield
+  //  set staked to false
+
+  //function vote(address charityWallet) public {
+  //TODO:
+  //  ensure staked
+  //  reifyYield
+  //  somehow add wallet weight to address 
+  //  track currentVote
+  //  updateCharityWallet()
+
+  //function updateCharityWallet
+  //TODO: ??????????
+  //  maybe can be broken into 3 functions
+  //    addVote
+  //    recalculateCharityWallet
+  //    removeVote
+  //  removeVote must call recalculateCharityWallet, but addVote doesn't have to
+  //  a delegate system might be able to optimize it somewhat
+
   function getYield(StakedWallet memory stakedWallet) public pure returns (uint256) {
+    //TODO: calculate interest based on time since staking
     return 0;
   }
 
