@@ -27,104 +27,80 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   uint256 _totalSupply;
   mapping (address => uint256) private _balances;
 
-  struct StakeDetails {
-    uint stakeTime;
-    bool currentlyStaked;
-    address currentVote;
-  }
-
-  //TODO: needs initialization, don't use 0 index
-  StakeDetails[] public staked;
-  mapping(address => uint) private stakedWalletIndices;
+  mapping (address => uint) stakeTimes;
+  mapping (address => bool) currentlyStaked;
+  mapping (address => bool) currentlyLocked;
+  mapping (address => address) currentVotes;
+  mapping (address => uint256) voteWeights;
 
   mapping(address => uint256) private voteCounts;
   //TODO: needs initialization
   address[] private voteIterator;
   mapping(address => bool) walletWasVotedFor;
+  //TODO: needs initialization
   address currentCharityWallet;
-  
 
-  function getStakedWallets() public view returns (uint[] memory) {
-    uint[] memory result = new uint[](staked.length - 1);
-    uint counter = 0;
-
-    for (uint i = 1; i < staked.length; i++) {
-      if (staked[i].currentlyStaked == true) {
-        result[counter] = i;
-        counter++;
-      }
-    }
-    return result;
+  function isStaked(address wallet) public view returns (bool) {
+    return currentlyStaked[wallet];
   }
 
+  function stakeCooldownComplete(address wallet) view returns (bool) {
+    //TODO: correct the math
+    return stakeTimes[wallet] > 2000;
+  }
 
   function stakeWallet() public returns (bool) {
     address sender = msg.sender;
+
+    require(!isStaked(sender));
+
     require(_canStake(sender), "Wallet needs sufficient funds to stake");
 
-    uint stakeIndex = stakedWalletIndices[sender]; 
-    if (stakeIndex != 0) {
-      staked.push(StakeDetails(stakeTime: block.timestamp, currentlyStaked: true}));
-      //TODO: off by one error?
-      stakedWalletIndices[sender] = staked.length;
-    }
-    else {
-      StakeDetails storage oldStake = staked[stakeIndex];
-      oldStake.stakeTime = block.timestamp;
-      oldStake.currentlyStaked = true;
-      oldStake.currentVote = address(0);
-    }
+    currentlyStaked[sender] = true;
+    currentlyLocked[sender] = false;
+    currentVotes[sender] = address(0);
+    stakeTimes[sender] = block.timestamp;
+
 
     return true;
   }
 
-  function unstake() public {
+  function unstakeWallet() public {
     address sender = msg.sender;
 
-    uint stakeIndex = stakedWalletIndices[sender]; 
+    require(isStaked(sender));
+    require(stakeCooldownComplete(sender))
 
-    require(stakeIndex != 0);
-
-    StakeDetails storage sDetails = staked[stakeIndex];
-
-    require(sDetails.currentlyStaked);
-
-    //TODO: ensure enough time passed (use better math)
-    require(sDetails.stakeTime > 2000)
-
-    if (sDetails.currentVote != address(0)) {
-      voteCounts[sDetails.currentVote] = voteCounts[sDetails.currentVote].sub(balances[sender]);
+    address vote = currentVotes[sender];
+    if (vote != address(0)) {
+      voteCounts[vote] = voteCounts[vote].sub(voteWeights[sender]);
     }
     reifyYield(sender);
 
-    sDetails.currentlyStaked = false;
+    currentlyStaked[sender] = false;
   }
 
   function vote(address charityWallet) public {
     address sender = msg.sender;
 
-    uint stakeIndex = stakedWalletIndices[sender]; 
+    require(isStaked(sender));
 
-    StakeDetails storage sDetails = staked[stakeIndex];
-
-    require(sDetails.currentlyStaked);
-
-    //TODO: ensure enough time passed (use better math)
-    require(sDetails.stakeTime > 2000)
-
-    if (sDetails.currentVote != address(0)) {
-      voteCounts[sDetails.currentVote] = voteCounts[sDetails.currentVote].sub(balances[sender]);
+    address vote = currentVotes[sender];
+    if (vote != address(0)) {
+      voteCounts[vote] = voteCounts[vote].sub(voteWeights[sender]);
     }
-    reifyYield(sender);
+
+    uint256 memory newVoteWeight = balances[sender];
+    voteWeights[sender] = newVoteWeight;
 
     if (!walletWasVotedFor[charityWallet]) {
       voteIterator.push(charityWallet);
       walletWasVotedFor[charityWallet] = true;
     }
 
-    voteCounts[charityWallet] = voteCounts[charityWallet].add(balances[sender]);
+    voteCounts[charityWallet] = voteCounts[charityWallet].add(newVoteWeight);
 
-    sDetails.currentVote = charityWallet;
+    currentVotes[sender] = charityWallet;
 
     updateCharityWallet();
   }
@@ -154,7 +130,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   //  removeVote must call recalculateCharityWallet, but addVote doesn't have to
   //  a delegate system might be able to optimize it somewhat
 
-  function getYield(StakeDetails memory stakedWallet) public pure returns (uint256) {
+  function getYield(address wallet) public pure returns (uint256) {
     //TODO: calculate interest based on time since staking
     return 0;
   }
@@ -162,17 +138,13 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   //TODO: the problem with this being public is that since reifyYield updates stakeTime,
   //      another user could prevent someone from unstaking maliciously
   function reifyYield(address wallet) public {
-    uint wasStaked = stakedWalletIndices[wallet];
-    require(wasStaked != 0);
+    require(isStaked(wallet));
 
-    StakeDetails storage stakedWallet = staked[wasStaked];
-    require(stakedWallet.currentlyStaked == true);
-
-    uint yield = getYield(stakedWallet);
+    uint yield = getYield(wallet);
 
     //TODO: track yield in totalSupply
 
-    stakedWallet.stakeTime = block.timestamp;
+    stakedTimes[wallet] = block.timestamp;
 
     balances[wallet] = balances[wallet].add(yield);
     //TODO: figure out how to divide yield
