@@ -47,7 +47,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     return !currentlyLocked[wallet];
   }
 
-  function stakeCooldownComplete(address wallet) view returns (bool) {
+  function stakeCooldownComplete(address wallet) private view returns (bool) {
     //TODO: correct the math
     return stakeTimes[wallet] > 2000;
   }
@@ -88,7 +88,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     }
   }
 
-  function vote(address charityWallet) public {
+  function voteForAddress(address charityWallet) public {
     address sender = msg.sender;
 
     require(isStaked(sender));
@@ -99,7 +99,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
       voteCounts[vote] = voteCounts[vote].sub(voteWeights[sender]);
     }
 
-    uint256 memory newVoteWeight = balances[sender];
+    uint256 newVoteWeight = balances[sender];
     voteWeights[sender] = newVoteWeight;
 
     if (!walletWasVotedFor[charityWallet]) {
@@ -119,7 +119,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     address winner = address(0);
 
     for (uint i = 0; i < voteIterator.length; i++) {
-      address memory currentWallet = voteIterator[i];
+      address currentWallet = voteIterator[i];
       uint256 voteValue = voteCounts[currentWallet];
 
       //TODO: consider implication of zero vote value
@@ -154,7 +154,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     //TODO: track yield in totalSupply
 
-    stakedTimes[wallet] = block.timestamp;
+    stakeTimes[wallet] = block.timestamp;
 
     balances[wallet] = balances[wallet].add(yield);
     //TODO: figure out how to divide yield
