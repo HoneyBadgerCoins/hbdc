@@ -43,6 +43,9 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   function isStaked(address wallet) public view returns (bool) {
     return currentlyStaked[wallet];
   }
+  function isUnlocked(address wallet) public view returns (bool) {
+    return !currentlyLocked[wallet];
+  }
 
   function stakeCooldownComplete(address wallet) view returns (bool) {
     //TODO: correct the math
@@ -69,21 +72,27 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     address sender = msg.sender;
 
     require(isStaked(sender));
-    require(stakeCooldownComplete(sender))
 
-    address vote = currentVotes[sender];
-    if (vote != address(0)) {
-      voteCounts[vote] = voteCounts[vote].sub(voteWeights[sender]);
+    if (!stakeCooldownComplete(sender)) {
+      currentlyLocked[sender] = true;
     }
-    reifyYield(sender);
 
-    currentlyStaked[sender] = false;
+    else {
+      address vote = currentVotes[sender];
+      if (vote != address(0)) {
+        voteCounts[vote] = voteCounts[vote].sub(voteWeights[sender]);
+      }
+      reifyYield(sender);
+
+      currentlyStaked[sender] = false;
+    }
   }
 
   function vote(address charityWallet) public {
     address sender = msg.sender;
 
     require(isStaked(sender));
+    require(isUnlocked(sender));
 
     address vote = currentVotes[sender];
     if (vote != address(0)) {
@@ -139,6 +148,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   //      another user could prevent someone from unstaking maliciously
   function reifyYield(address wallet) public {
     require(isStaked(wallet));
+    require(isUnlocked(wallet));
 
     uint yield = getYield(wallet);
 
