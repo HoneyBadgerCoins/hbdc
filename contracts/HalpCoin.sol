@@ -6,6 +6,9 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "./FixidityLib.sol";
+
+//TODO: investigate why SafeMath is deprecated
  
 contract HalpCoin is IERC20Upgradeable, Initializable {
 
@@ -22,12 +25,13 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   mapping (address => uint256) private _balances;
 
   using SafeMathUpgradeable for uint256;
+  using FixidityLib for int256;
   using AddressUpgradeable for address;
 
   uint256 _totalSupply;
   mapping (address => uint256) private _balances;
 
-  mapping (address => uint) stakeTimes;
+  mapping (address => uint) public stakeTimes;
   mapping (address => bool) currentlyStaked;
   mapping (address => bool) currentlyLocked;
   mapping (address => address) currentVotes;
