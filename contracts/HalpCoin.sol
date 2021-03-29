@@ -143,7 +143,27 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   //  removeVote must call recalculateCharityWallet, but addVote doesn't have to
   //  a delegate system might be able to optimize it somewhat
 
-  function getYield(address wallet) public pure returns (uint256) {
+  function getYield(uint256 principal, uint lastCompounded) public view returns (uint256) {
+    uint n = block.timestamp - lastCompounded;
+    //TODO: this name should reflect its mutability
+    int256 fixedPrincipal = int256(principal).newFixed();
+
+    int256 rate = int256(51271).newFixedFraction(1000000);
+    int256 fixed2 = int256(2).newFixed();
+
+    while (n > 0) {
+      if (n % 2 == 1) {
+        fixedPrincipal = fixedPrincipal.multiply(rate);
+        n -= 1;
+      }
+      else {
+        rate = fixed2.multiply(rate).multiply(rate).multiply(rate);
+        n /= 2;
+      }
+
+      return uint256(fixedPrincipal.fromFixed());
+    }
+    
     //TODO: calculate interest based on time since staking
     return 0;
   }
@@ -154,7 +174,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     require(isStaked(wallet));
     require(isUnlocked(wallet));
 
-    uint yield = getYield(wallet);
+    uint yield = getYield(balances[wallet], stakeTimes[wallet]);
 
     //TODO: track yield in totalSupply
 
