@@ -26,5 +26,7 @@ contract('HalpCoin', function () {
 
     const yielded3 = await this.halp.calculateYield(1000000000, 31556952);
     expect(yielded3.toString()).to.equal("1069999999");
+
+    //TODO: test functional limits before overflow
   });
 });

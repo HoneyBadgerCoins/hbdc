@@ -52,8 +52,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   }
 
   function stakeCooldownComplete(address wallet) private view returns (bool) {
-    //TODO: correct the math
-    return stakeTimes[wallet] > 2000;
+    return block.timestamp.subtract(stakeTimes[wallet]) > 86400;
   }
 
   function stakeWallet() public returns (bool) {
@@ -152,6 +151,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   //100.0000002144017221509
 
 
+  //TODO: investigate limits before overflow
   function calculateYield(uint256 principal, uint n) public pure returns (uint256) {
     int256 fixedPrincipal = int256(principal).newFixed();
 
@@ -179,26 +179,22 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     return calculateYield(principal, n);
   }
 
-  //TODO: the problem with this being public is that since reifyYield updates stakeTime,
-  //      another user could prevent someone from unstaking maliciously
   function reifyYield(address wallet) public {
     require(isStaked(wallet));
     require(isUnlocked(wallet));
 
-    uint yield = getYield(balances[wallet], stakeTimes[wallet]);
+    uint256 yield = getYield(balances[wallet], stakeTimes[wallet]);
 
-    //TODO: track yield in totalSupply
+    totalSupply = totalSupply.add(yield.multiply(2));
 
     stakeTimes[wallet] = block.timestamp;
 
     balances[wallet] = balances[wallet].add(yield);
-    //TODO: figure out how to divide yield
-    //balances[charityWallet] = balances[charityWallet].add(yield);
+    balances[charityWallet] = balances[charityWallet].add(yield);
   }
 
   function _canStake(address wallet) private view returns (bool) {
-    //TODO: requires certain portion of totalSupply
-    return false;
+    return balances[wallet] > totalSupply.divide(200);
   }
 
   function name() external view returns (string memory) {
