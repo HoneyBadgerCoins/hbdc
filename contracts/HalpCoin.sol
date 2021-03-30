@@ -155,7 +155,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   function calculateYield(uint256 principal, uint n) public pure returns (uint256) {
     int256 fixedPrincipal = int256(principal).newFixed();
 
-    int256 rate = int256(5).newFixedFraction(100);
+    int256 rate = int256(2144017221509).newFixedFraction(1000000000000000000000);
     int256 fixed1 = int256(1).newFixed();
     int256 fixed2 = int256(2).newFixed();
 
