@@ -16,7 +16,7 @@ library FixidityLib {
     /**
      * @notice Number of positions that the comma is shifted to the right.
      */
-    function digits() public pure returns(uint8) {
+    function digits() internal pure returns(uint8) {
         return 24;
     }
     
@@ -25,7 +25,7 @@ library FixidityLib {
      * @dev Test fixed1() equals 10^digits()
      * Hardcoded to 24 digits.
      */
-    function fixed1() public pure returns(int256) {
+    function fixed1() internal pure returns(int256) {
         return 1000000000000000000000000;
     }
 
@@ -34,7 +34,7 @@ library FixidityLib {
      * @dev Test mulPrecision() equals sqrt(fixed1)
      * Hardcoded to 24 digits.
      */
-    function mulPrecision() public pure returns(int256) {
+    function mulPrecision() internal pure returns(int256) {
         return 1000000000000;
     }
 
@@ -42,7 +42,7 @@ library FixidityLib {
      * @notice Maximum value that can be represented in an int256
      * @dev Test maxInt256() equals 2^255 -1
      */
-    function maxInt256() public pure returns(int256) {
+    function maxInt256() internal pure returns(int256) {
         return 57896044618658097711785492504343953926634992332820282019728792003956564819967;
     }
 
@@ -50,7 +50,7 @@ library FixidityLib {
      * @notice Minimum value that can be represented in an int256
      * @dev Test minInt256 equals (2^255) * (-1)
      */
-    function minInt256() public pure returns(int256) {
+    function minInt256() internal pure returns(int256) {
         return -57896044618658097711785492504343953926634992332820282019728792003956564819968;
     }
 
@@ -60,7 +60,7 @@ library FixidityLib {
      * Test maxNewFixed() equals maxInt256() / fixed1()
      * Hardcoded to 24 digits.
      */
-    function maxNewFixed() public pure returns(int256) {
+    function maxNewFixed() internal pure returns(int256) {
         return 57896044618658097711785492504343953926634992332820282;
     }
 
@@ -70,7 +70,7 @@ library FixidityLib {
      * @dev Test minNewFixed() equals -(maxInt256()) / fixed1()
      * Hardcoded to 24 digits.
      */
-    function minNewFixed() public pure returns(int256) {
+    function minNewFixed() internal pure returns(int256) {
         return -57896044618658097711785492504343953926634992332820282;
     }
 
@@ -82,7 +82,7 @@ library FixidityLib {
      * Test add(-maxFixedAdd(),-maxFixedAdd()) equals -maxFixedAdd() - maxFixedAdd()
      * Test add(-maxFixedAdd(),-maxFixedAdd()-1) throws 
      */
-    function maxFixedAdd() public pure returns(int256) {
+    function maxFixedAdd() internal pure returns(int256) {
         return 28948022309329048855892746252171976963317496166410141009864396001978282409983;
     }
 
@@ -90,7 +90,7 @@ library FixidityLib {
      * @notice Maximum negative value that can be safely in a subtraction.
      * @dev Test maxFixedSub() equals minInt256() / 2
      */
-    function maxFixedSub() public pure returns(int256) {
+    function maxFixedSub() internal pure returns(int256) {
         return -28948022309329048855892746252171976963317496166410141009864396001978282409984;
     }
 
@@ -108,7 +108,7 @@ library FixidityLib {
      * Test multiply(-maxFixedMul(),maxFixedMul()+1) throws 
      * Hardcoded to 24 digits.
      */
-    function maxFixedMul() public pure returns(int256) {
+    function maxFixedMul() internal pure returns(int256) {
         return 240615969168004498257251713877715648331380787511296;
     }
 
@@ -120,7 +120,7 @@ library FixidityLib {
      * Test divide(maxFixedDiv()+1,multiply(mulPrecision(),mulPrecision())) throws
      * Hardcoded to 24 digits.
      */
-    function maxFixedDiv() public pure returns(int256) {
+    function maxFixedDiv() internal pure returns(int256) {
         return 57896044618658097711785492504343953926634992332820282;
     }
 
@@ -131,7 +131,7 @@ library FixidityLib {
      * Test divide(10**(digits()*2 + 1),10**(digits()*2 + 1)) = throws
      * Hardcoded to 24 digits.
      */
-    function maxFixedDivisor() public pure returns(int256) {
+    function maxFixedDivisor() internal pure returns(int256) {
         return 1000000000000000000000000000000000000000000000000;
     }
 
@@ -144,7 +144,7 @@ library FixidityLib {
      * Test newFixed(maxNewFixed()+1) fails
      */
     function newFixed(int256 x)
-        public
+        internal
         pure
         returns (int256)
     {
@@ -158,7 +158,7 @@ library FixidityLib {
      * library to a non decimal. All decimal digits will be truncated.
      */
     function fromFixed(int256 x)
-        public
+        internal
         pure
         returns (int256)
     {
@@ -192,7 +192,7 @@ library FixidityLib {
      * Test convertFixed(1,0,39) throws
      */
     function convertFixed(int256 x, uint8 _originDigits, uint8 _destinationDigits)
-        public
+        internal
         pure
         returns (int256)
     {
@@ -226,7 +226,7 @@ library FixidityLib {
      * will be truncated accordingly.
      */
     function newFixed(int256 x, uint8 _originDigits)
-        public
+        internal
         pure
         returns (int256)
     {
@@ -240,7 +240,7 @@ library FixidityLib {
      * FixidityLib.digits() will be truncated accordingly.
      */
     function fromFixed(int256 x, uint8 _destinationDigits)
-        public
+        internal
         pure
         returns (int256)
     {
@@ -264,7 +264,7 @@ library FixidityLib {
         int256 numerator, 
         int256 denominator
         )
-        public
+        internal
         pure
         returns (int256)
     {
@@ -285,7 +285,7 @@ library FixidityLib {
      * Test integer(-fixed1()) returns -fixed1()
      * Test integer(newFixed(-maxNewFixed())) returns -maxNewFixed()*fixed1()
      */
-    function integer(int256 x) public pure returns (int256) {
+    function integer(int256 x) internal pure returns (int256) {
         return (x / fixed1()) * fixed1(); // Can't overflow
     }
 
@@ -299,7 +299,7 @@ library FixidityLib {
      * Test fractional(-fixed1()) returns 0
      * Test fractional(-fixed1()+1) returns -10^24-1
      */
-    function fractional(int256 x) public pure returns (int256) {
+    function fractional(int256 x) internal pure returns (int256) {
         return x - (x / fixed1()) * fixed1(); // Can't overflow
     }
 
@@ -314,7 +314,7 @@ library FixidityLib {
      * Test abs(newFixed(maxNewFixed())) returns maxNewFixed()*fixed1()
      * Test abs(newFixed(minNewFixed())) returns -minNewFixed()*fixed1()
      */
-    function abs(int256 x) public pure returns (int256) {
+    function abs(int256 x) internal pure returns (int256) {
         if (x >= 0) {
             return x;
         } else {
@@ -336,7 +336,7 @@ library FixidityLib {
      * Test add(maxInt256(),maxInt256()) fails
      * Test add(minInt256(),minInt256()) fails
      */
-    function add(int256 x, int256 y) public pure returns (int256) {
+    function add(int256 x, int256 y) internal pure returns (int256) {
         int256 z = x + y;
         if (x > 0 && y > 0) assert(z > x && z > y);
         if (x < 0 && y < 0) assert(z < x && z < y);
@@ -347,7 +347,7 @@ library FixidityLib {
      * @notice x-y. You can use add(x,-y) instead. 
      * @dev Tests covered by add(x,y)
      */
-    function subtract(int256 x, int256 y) public pure returns (int256) {
+    function subtract(int256 x, int256 y) internal pure returns (int256) {
         return add(x,-y);
     }
 
@@ -367,7 +367,7 @@ library FixidityLib {
      * Test multiply(maxFixedMul()+1,maxFixedMul()) fails
      * Test multiply(maxFixedMul(),maxFixedMul()+1) fails
      */
-    function multiply(int256 x, int256 y) public pure returns (int256) {
+    function multiply(int256 x, int256 y) internal pure returns (int256) {
         if (x == 0 || y == 0) return 0;
         if (y == fixed1()) return x;
         if (x == fixed1()) return y;
@@ -416,7 +416,7 @@ library FixidityLib {
      * Test reciprocal(fixed1()*fixed1()) returns 1 // Testing how the fractional is truncated
      * Test reciprocal(2*fixed1()*fixed1()) returns 0 // Testing how the fractional is truncated
      */
-    function reciprocal(int256 x) public pure returns (int256) {
+    function reciprocal(int256 x) internal pure returns (int256) {
         assert(x != 0);
         return (fixed1()*fixed1()) / x; // Can't overflow
     }
@@ -431,7 +431,7 @@ library FixidityLib {
      * Test divide(maxFixedDiv()+1,1) throws
      * Test divide(maxFixedDiv(),maxFixedDiv()) returns fixed1()
      */
-    function divide(int256 x, int256 y) public pure returns (int256) {
+    function divide(int256 x, int256 y) internal pure returns (int256) {
         if (y == fixed1()) return x;
         assert(y != 0);
         assert(y <= maxFixedDivisor());

@@ -143,29 +143,40 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   //  removeVote must call recalculateCharityWallet, but addVote doesn't have to
   //  a delegate system might be able to optimize it somewhat
 
-  function getYield(uint256 principal, uint lastCompounded) public view returns (uint256) {
-    uint n = block.timestamp - lastCompounded;
-    //TODO: this name should reflect its mutability
+  //0.0000001846468194323
+  //0.000000184646819432
+  //0.000000093668115524
+  //0.000000000936681155
+
+  //100 * (1.07)^(1/31556952)
+  //100.0000002144017221509
+
+
+  function calculateYield(uint256 principal, uint n) public pure returns (uint256) {
     int256 fixedPrincipal = int256(principal).newFixed();
 
-    int256 rate = int256(51271).newFixedFraction(1000000);
+    int256 rate = int256(5).newFixedFraction(100);
+    int256 fixed1 = int256(1).newFixed();
     int256 fixed2 = int256(2).newFixed();
 
     while (n > 0) {
       if (n % 2 == 1) {
-        fixedPrincipal = fixedPrincipal.multiply(rate);
+        fixedPrincipal = fixedPrincipal.add(fixedPrincipal.multiply(rate));
         n -= 1;
       }
       else {
-        rate = fixed2.multiply(rate).multiply(rate).multiply(rate);
+        rate = (fixed2.multiply(rate))
+          .add(rate.multiply(rate));
         n /= 2;
       }
-
-      return uint256(fixedPrincipal.fromFixed());
     }
-    
-    //TODO: calculate interest based on time since staking
-    return 0;
+    return uint256(fixedPrincipal.fromFixed());
+  }
+
+  function getYield(uint256 principal, uint lastCompounded) public view returns (uint256) {
+    uint n = block.timestamp - lastCompounded;
+
+    return calculateYield(principal, n);
   }
 
   //TODO: the problem with this being public is that since reifyYield updates stakeTime,
