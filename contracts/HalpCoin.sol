@@ -11,6 +11,9 @@ import "./FixidityLib.sol";
 //TODO: investigate why SafeMath is deprecated
  
 contract HalpCoin is IERC20Upgradeable, Initializable {
+  using SafeMathUpgradeable for uint256;
+  using FixidityLib for int256;
+  using AddressUpgradeable for address;
 
   uint256 _totalSupply;
   string private _name;
@@ -23,13 +26,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   }
 
   mapping (address => uint256) private _balances;
-
-  using SafeMathUpgradeable for uint256;
-  using FixidityLib for int256;
-  using AddressUpgradeable for address;
-
-  uint256 _totalSupply;
-  mapping (address => uint256) private _balances;
+  mapping (address => mapping (address => uint256)) private _allowances;
 
   mapping (address => uint) public stakeTimes;
   mapping (address => bool) currentlyStaked;
@@ -52,7 +49,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   }
 
   function stakeCooldownComplete(address wallet) private view returns (bool) {
-    return block.timestamp.subtract(stakeTimes[wallet]) > 86400;
+    return block.timestamp.sub(stakeTimes[wallet]) > 86400;
   }
 
   function stakeWallet() public returns (bool) {
@@ -157,7 +154,6 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     int256 fixedPrincipal = int256(principal).newFixed();
 
     int256 rate = int256(2144017221509).newFixedFraction(1000000000000000000000);
-    int256 fixed1 = int256(1).newFixed();
     int256 fixed2 = int256(2).newFixed();
 
     while (n > 0) {
@@ -174,8 +170,8 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     return uint256(fixedPrincipal.fromFixed());
   }
 
-  function getCompoundingFactor(address wallet) public view return (uint) {
-    return block.timestamp.subtract(stakeTimes[wallet]);
+  function getCompoundingFactor(address wallet) public view returns (uint) {
+    return block.timestamp.sub(stakeTimes[wallet]);
   }
 
   function reifyYield(address wallet) public {
@@ -188,16 +184,16 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
 
-    totalSupply = totalSupply.add(yield.multiply(2));
+    _totalSupply = _totalSupply.add(yield.mul(2));
 
     stakeTimes[wallet] = block.timestamp;
 
     _balances[wallet] = _balances[wallet].add(yield);
-    _balances[charityWallet] = _balances[charityWallet].add(yield);
+    _balances[currentCharityWallet] = _balances[currentCharityWallet].add(yield);
   }
 
   function _canStake(address wallet) private view returns (bool) {
-    return _balances[wallet] > totalSupply.divide(200);
+    return _balances[wallet] > _totalSupply.div(200);
   }
 
   function name() external view returns (string memory) {
