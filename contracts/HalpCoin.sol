@@ -103,7 +103,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
       voteCounts[vote] = voteCounts[vote].sub(voteWeights[sender]);
     }
 
-    uint256 newVoteWeight = balances[sender];
+    uint256 newVoteWeight = _balances[sender];
     voteWeights[sender] = newVoteWeight;
 
     if (!walletWasVotedFor[charityWallet]) {
@@ -186,18 +186,18 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     if (compoundingFactor < 7200) return;
 
-    uint256 yield = calculateYield(balances[wallet], compoundingFactor);
+    uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
 
     totalSupply = totalSupply.add(yield.multiply(2));
 
     stakeTimes[wallet] = block.timestamp;
 
-    balances[wallet] = balances[wallet].add(yield);
-    balances[charityWallet] = balances[charityWallet].add(yield);
+    _balances[wallet] = _balances[wallet].add(yield);
+    _balances[charityWallet] = _balances[charityWallet].add(yield);
   }
 
   function _canStake(address wallet) private view returns (bool) {
-    return balances[wallet] > totalSupply.divide(200);
+    return _balances[wallet] > totalSupply.divide(200);
   }
 
   function name() external view returns (string memory) {
