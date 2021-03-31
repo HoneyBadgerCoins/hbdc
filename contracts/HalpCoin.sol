@@ -91,6 +91,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     }
   }
 
+  //TODO: ensure you cannot vote for a staked wallet
   function voteForAddress(address charityWallet) public {
     address sender = msg.sender;
 
@@ -173,17 +174,19 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     return uint256(fixedPrincipal.fromFixed());
   }
 
-  function getYield(uint256 principal, uint lastCompounded) public view returns (uint256) {
-    uint n = block.timestamp - lastCompounded;
-
-    return calculateYield(principal, n);
+  function getCompoundingFactor(address wallet) public view return (uint) {
+    return block.timestamp.subtract(stakeTimes[wallet]);
   }
 
   function reifyYield(address wallet) public {
     require(isStaked(wallet));
     require(isUnlocked(wallet));
 
-    uint256 yield = getYield(balances[wallet], stakeTimes[wallet]);
+    uint compoundingFactor = getCompoundingFactor(wallet);
+
+    if (compoundingFactor < 7200) return;
+
+    uint256 yield = calculateYield(balances[wallet], compoundingFactor);
 
     totalSupply = totalSupply.add(yield.multiply(2));
 
