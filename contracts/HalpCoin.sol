@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./FixidityLib.sol";
 
+import "./GrumpBank.sol";
+
 //TODO: investigate why SafeMath is deprecated
  
 contract HalpCoin is IERC20Upgradeable, Initializable {
@@ -19,10 +21,21 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   string private _name;
   string private _symbol;
 
-  function initialize() initializer public {
+  address grumpyBankAddress;
+
+  function initialize(address bankAddress) initializer public {
     _name = 'HalpCoin';
     _symbol = 'HALP';
     _totalSupply = 10000000;
+    
+    //TODO: this needs lots more thinking
+    _balances[address(0)] = _totalSupply;
+
+    grumpyBankAddress = bankAddress;
+  }
+
+  function requisitionFromBank() public view {
+    GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
   }
 
   mapping (address => uint256) private _balances;

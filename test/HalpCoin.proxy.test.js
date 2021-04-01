@@ -5,10 +5,12 @@ const { deployProxy } = require('@openzeppelin/truffle-upgrades');
  
 // Load compiled artifacts
 const HalpCoin = artifacts.require('HalpCoin');
+const GrumpBank = artifacts.require('GrumpBank');
  
 contract('HalpCoin (proxy)', function () {
   beforeEach(async function () {
-    this.halp = await deployProxy(HalpCoin);
+    this.bank = await GrumpBank.new();
+    this.halp = await deployProxy(HalpCoin, [this.bank.address]);
   });
  
   it('initialized total supply', async function () {
