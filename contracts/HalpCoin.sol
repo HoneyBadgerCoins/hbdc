@@ -53,6 +53,8 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   mapping (address => uint256) private _balances;
   mapping (address => mapping (address => uint256)) private _allowances;
 
+  //TODO: track stateStart independently of the way currently stakeTimes is used.
+  //      stakeStart should not be updated until unstaking, and could be used for nft minting
   mapping (address => uint) public stakeTimes;
   mapping (address => bool) currentlyStaked;
   mapping (address => bool) currentlyLocked;
