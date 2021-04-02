@@ -5,11 +5,35 @@ const { expect } = require('chai');
 // Load compiled artifacts
 const HalpCoin = artifacts.require('HalpCoin');
 const GrumpBank = artifacts.require('GrumpBank');
+
+const increaseTime = function(duration) {
+  const id = Date.now()
+
+  return new Promise((resolve, reject) => {
+    web3.currentProvider.send({
+      jsonrpc: '2.0',
+      method: 'evm_increaseTime',
+      params: [duration],
+      id: id,
+    }, err1 => {
+      if (err1) return reject(err1)
+
+      web3.currentProvider.send({
+        jsonrpc: '2.0',
+        method: 'evm_mine',
+        id: id+1,
+      }, (err2, res) => {
+        return err2 ? reject(err2) : resolve(res)
+      })
+    })
+  })
+}
  
 contract('HalpCoin', accounts => {
-  beforeEach(async function () {
-    this.grumpBank = await GrumpBank.new();
-    this.halp = await HalpCoin.new(this.grumpBank.address);
+  before(async function () {
+    this.bank = await GrumpBank.new();
+    this.halp = await HalpCoin.new(this.bank.address);
+    await this.halp.initialize(this.bank.address);
   });
 
   it('should calculateYield correctly', async function () {
@@ -30,16 +54,43 @@ contract('HalpCoin', accounts => {
     //TODO: test functional limits before overflow
   });
  
-  it('should initialize supply by default', async () =>
-    HalpCoin.deployed()
-      .then(i => i.totalSupply())
-      .then(supply => assert.equal(supply.toString(), '10000000', 'total supply isn\'t right'))
-  );
+  it('should initialize supply by default', async function () {
+    var ts = await this.halp.totalSupply();
 
-  it('should be able to authenticate with the bank', async () => {
-    var bank = await GrumpBank.deployed();
-    var halp = await HalpCoin.deployed();
+    assert.equal(ts.toString(), '10000000', 'total supply isn\'t right');
+  });
 
-    bank.setAuthenticatedContract(halp.address);
+  it('should be able to authenticate with the bank', async function () {
+    this.bank.setAuthorizedContract(this.halp.address);
+
+    this.bank._testInitAccount(accounts[0], 20000000000);
+
+    var fundsAdded = await this.halp.requisitionFromBank();
+    expect(fundsAdded.logs[0].args[1].toString()).to.equal('10000000000');
+
+    var balanceOf = await this.halp.balanceOf(accounts[0]);
+    expect(balanceOf.toString()).to.equal('10000000000');
+
+    let eMsg;
+    try {
+      var f2 = await this.halp.requisitionFromBank();
+    }
+    catch (e) {
+      eMsg = e.reason;
+    }
+    expect(eMsg).to.equal('0TimePassed');
+
+    await increaseTime(1);
+
+    var f3 = await this.halp.requisitionFromBank();
+    expect(f3.logs[0].args[1].toString()).to.equal('0');
+
+    await increaseTime(86401);
+
+    var f3 = await this.halp.requisitionFromBank();
+    expect(f3.logs[0].args[1].toString()).to.equal('10000000000');
+
+    var b2 = await this.halp.balanceOf(accounts[0]);
+    expect(b2.toString()).to.equal('20000000000');
   });
 });
