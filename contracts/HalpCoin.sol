@@ -56,12 +56,12 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function requisitionFromBank() public returns (uint256) {
-    require(currentlyStaked[msg.sender] == false, "wallet cannot be staked");
+    require(currentlyStaked[_msgSender()] == false, "wallet cannot be staked");
     GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
 
-    uint256 amount = grumpBank.requisitionTokens(msg.sender);
-    _balances[msg.sender] = _balances[msg.sender] + amount;
-    emit Withdrawal(msg.sender, amount);
+    uint256 amount = grumpBank.requisitionTokens(_msgSender());
+    _balances[_msgSender()] = _balances[_msgSender()] + amount;
+    emit Withdrawal(_msgSender(), amount);
 
     _totalSupply += amount; 
     return amount;
@@ -97,7 +97,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function stakeWallet() public returns (bool) {
-    address sender = msg.sender;
+    address sender = _msgSender();
 
     require(!isStaked(sender));
 
@@ -112,7 +112,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function unstakeWallet() public {
-    address sender = msg.sender;
+    address sender = _msgSender();
 
     require(isStaked(sender));
 
@@ -133,7 +133,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   //TODO: ensure you cannot vote for a staked wallet
   function voteForAddress(address charityWallet) public {
-    address sender = msg.sender;
+    address sender = _msgSender();
 
     require(isStaked(sender));
     require(isUnlocked(sender));
@@ -266,7 +266,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   //don't know if this is needed? we could take the virtual part
   function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-    _transfer(msg.sender, recipient, amount); //look at why _msgSender() is used.
+    _transfer(_msgSender(), recipient, amount); //look at why _msgSender() is used.
     return true;
   }
   
@@ -292,7 +292,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   
   function approve(address spender, uint256 amount) public override returns (bool) {
-    _approve(msg.sender, spender, amount); //_msgSender()
+    _approve(_msgSender(), spender, amount); //_msgSender()
     return true;
 
   }
@@ -309,22 +309,22 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
     _transfer(sender, recipient, amount);
 
-    uint256 currentAllowance = _allowances[sender][msg.sender];
+    uint256 currentAllowance = _allowances[sender][_msgSender()];
     require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
-    _approve(sender, msg.sender, currentAllowance - amount);
+    _approve(sender, _msgSender(), currentAllowance - amount);
 
     return true;
   }
 
   function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
-    _approve(msg.sender, spender, _allowances[msg.sender][spender] + addedValue);
+    _approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue);
     return true;
   }
 
   function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-    uint256 currentAllowance = _allowances[msg.sender][spender];
+    uint256 currentAllowance = _allowances[_msgSender()][spender];
     require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
-    _approve(msg.sender, spender, currentAllowance - subtractedValue);
+    _approve(_msgSender(), spender, currentAllowance - subtractedValue);
     return true;
   }
 }
