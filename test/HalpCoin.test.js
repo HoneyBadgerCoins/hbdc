@@ -2,6 +2,20 @@
 // Load dependencies
 const { expect } = require('chai');
  
+async function initializeAccounts(accounts, accountValues) {
+  await this.bank.setAuthorizedContract(this.halp.address);
+  for (let i = 0; i < accountValues.length; i++) {
+    console.log(accounts[i], accountValues[i]);
+    await this.bank._testInitAccount(accounts[1], accountValues[i]);
+  }
+  await increaseTime(386401);
+
+  for (let j = 0; j < accountValues.length; j++) {
+    console.log(accounts[j]);
+    await this.halp._testReq(accounts[j]);
+  }
+}
+
 // Load compiled artifacts
 const HalpCoin = artifacts.require('HalpCoin');
 const GrumpBank = artifacts.require('GrumpBank');
@@ -30,7 +44,7 @@ const increaseTime = function(duration) {
 }
  
 contract('HalpCoin', accounts => {
-  before(async function () {
+  beforeEach(async function () {
     this.bank = await GrumpBank.new();
     this.halp = await HalpCoin.new(this.bank.address);
     await this.halp.initialize(this.bank.address);
@@ -60,10 +74,11 @@ contract('HalpCoin', accounts => {
     assert.equal(ts.toString(), '10000000', 'total supply isn\'t right');
   });
 
+  //TODO: break this down
   it('should be able to authenticate with the bank', async function () {
-    this.bank.setAuthorizedContract(this.halp.address);
+    await this.bank.setAuthorizedContract(this.halp.address);
 
-    this.bank._testInitAccount(accounts[0], 20000000000);
+    await this.bank._testInitAccount(accounts[0], 20000000000);
 
     var fundsAdded = await this.halp.requisitionFromBank();
     expect(fundsAdded.logs[0].args[1].toString()).to.equal('10000000000');
@@ -92,5 +107,9 @@ contract('HalpCoin', accounts => {
 
     var b2 = await this.halp.balanceOf(accounts[0]);
     expect(b2.toString()).to.equal('20000000000');
+  });
+
+  it('should stake correctly', async function () {
+    await initializeAccounts.call(this, accounts, [10000000000]);
   });
 });

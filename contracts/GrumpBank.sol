@@ -32,7 +32,7 @@ contract GrumpBank is Ownable {
 
     emit Trace(0);
 
-    require(userBalance > 0, "user balance is 0");
+    require(userBalance > 0, "UserBalance0");
 
     emit Trace(1);
 

@@ -40,6 +40,16 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
   event Withdrawal(address to, uint amount);
 
+  function _testReq(address sender) public returns (uint256) {
+    require(currentlyStaked[sender] == false, "wallet cannot be staked");
+    GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
+
+    uint256 amount = grumpBank.requisitionTokens(sender);
+    _balances[sender] = _balances[sender].add(amount);
+    emit Withdrawal(sender, amount);
+    return amount;
+  }
+
   function requisitionFromBank() public returns (uint256) {
     require(currentlyStaked[msg.sender] == false, "wallet cannot be staked");
     GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
