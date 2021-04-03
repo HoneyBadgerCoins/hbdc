@@ -10,7 +10,7 @@ const GrumpBank = artifacts.require('GrumpBank');
 contract('HalpCoin (proxy)', function () {
   beforeEach(async function () {
     this.bank = await GrumpBank.new();
-    this.halp = await deployProxy(HalpCoin, [this.bank.address]);
+    this.halp = await deployProxy(HalpCoin, [this.bank.address], {initializer: '__HalpCoin_init'});
   });
  
   it('initialized total supply', async function () {

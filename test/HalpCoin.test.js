@@ -53,7 +53,7 @@ const increaseTime = function(duration) {
 contract('HalpCoin', accounts => {
   beforeEach(async function () {
     this.bank = await GrumpBank.new();
-    this.halp = await HalpCoin.new(this.bank.address);
+    this.halp = await HalpCoin.new(this.bank.address, {initializer: '__HalpCoin_init'});
     await this.halp.initialize(this.bank.address);
   });
 

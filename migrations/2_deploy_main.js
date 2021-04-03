@@ -9,5 +9,6 @@ module.exports = async function (deployer) {
 
   //var g = await GrumpBank.deployed();
 
-  await deployProxy(HalpCoin, [GrumpBank.address]);
+  //await deployProxy(HalpCoin, [GrumpBank.address]);
+  await deployProxy(HalpCoin, [GrumpBank.address],  { deployer, initializer: '__HalpCoin_init' });
 };

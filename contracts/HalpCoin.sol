@@ -4,16 +4,14 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./FixidityLib.sol";
 
 import "./GrumpBank.sol";
 
-//TODO: investigate why SafeMath is deprecated
  
-contract HalpCoin is IERC20Upgradeable, Initializable {
-  using SafeMathUpgradeable for uint256;
+contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
   using AddressUpgradeable for address;
 
@@ -23,7 +21,12 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
   address grumpyBankAddress;
 
-  function initialize(address bankAddress) initializer public {
+  function __HalpCoin_init(address bankAddress) initializer public {
+    __Context_init_unchained();
+    initialize(bankAddress);
+  }
+
+  function initialize(address bankAddress) initializer internal{
     _name = 'MeowDAO';
     _symbol = 'Meow';
     _totalSupply = 0;
@@ -45,7 +48,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
 
     uint256 amount = grumpBank.requisitionTokens(sender);
-    _balances[sender] = _balances[sender].add(amount);
+    _balances[sender] = _balances[sender] + amount;
     emit Withdrawal(sender, amount);
 
     _totalSupply += amount; 
@@ -57,7 +60,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
 
     uint256 amount = grumpBank.requisitionTokens(msg.sender);
-    _balances[msg.sender] = _balances[msg.sender].add(amount);
+    _balances[msg.sender] = _balances[msg.sender] + amount;
     emit Withdrawal(msg.sender, amount);
 
     _totalSupply += amount; 
@@ -90,7 +93,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   }
 
   function stakeCooldownComplete(address wallet) private view returns (bool) {
-    return block.timestamp.sub(stakeTimes[wallet]) > 86400;
+    return block.timestamp - stakeTimes[wallet] > 86400;
   }
 
   function stakeWallet() public returns (bool) {
@@ -120,7 +123,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     else {
       address vote = currentVotes[sender];
       if (vote != address(0)) {
-        voteCounts[vote] = voteCounts[vote].sub(voteWeights[sender]);
+        voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
       }
       reifyYield(sender);
 
@@ -137,8 +140,8 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     address vote = currentVotes[sender];
     if (vote != address(0)) {
-      voteCounts[vote] = voteCounts[vote].sub(voteWeights[sender]);
-    }
+      voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
+   }
 
     uint256 newVoteWeight = _balances[sender];
     voteWeights[sender] = newVoteWeight;
@@ -148,7 +151,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
       walletWasVotedFor[charityWallet] = true;
     }
 
-    voteCounts[charityWallet] = voteCounts[charityWallet].add(newVoteWeight);
+    voteCounts[charityWallet] = voteCounts[charityWallet] + newVoteWeight;
 
     currentVotes[sender] = charityWallet;
 
@@ -211,7 +214,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   }
 
   function getCompoundingFactor(address wallet) public view returns (uint) {
-    return block.timestamp.sub(stakeTimes[wallet]);
+    return block.timestamp - stakeTimes[wallet];
   }
 
   function reifyYield(address wallet) public {
@@ -226,20 +229,20 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
     emit Trace(yield);
 
-    _totalSupply = _totalSupply.add(yield.mul(2));
+    _totalSupply = _totalSupply + (yield * 2);
 
     stakeTimes[wallet] = block.timestamp;
 
-    _balances[wallet] = _balances[wallet].add(yield);
+    _balances[wallet] = _balances[wallet] +  yield;
     emit Trace(yield);
-    _balances[currentCharityWallet] = _balances[currentCharityWallet].add(yield);
+    _balances[currentCharityWallet] = _balances[currentCharityWallet] + yield;
   }
 
   event Trace2(uint n, uint r);
   event Trace(uint n);
 
   function _canStake(address wallet) private view returns (bool) {
-    return _balances[wallet] > _totalSupply.div(1000);
+    return _balances[wallet] > _totalSupply/1000;
   }
 
   function name() external view returns (string memory) {
