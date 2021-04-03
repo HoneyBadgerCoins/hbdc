@@ -14,6 +14,15 @@ async function initializeAccounts(accounts, accountValues) {
   }
 }
 
+async function getErrorMsg(f) {
+  let received;
+  try { await f(); }
+  catch (e) {
+    received = e.reason;
+  }
+  return received;
+}
+
 // Load compiled artifacts
 const HalpCoin = artifacts.require('HalpCoin');
 const GrumpBank = artifacts.require('GrumpBank');
@@ -53,14 +62,13 @@ contract('HalpCoin', accounts => {
 
     //const yielded = await this.halp.calculateYield(1000000000000000, secondsInYear)
     const yielded = await this.halp.calculateYield(1000000000, 1);
-    expect(yielded.toString()).to.equal("1000000002");
+    expect(yielded.toString()).to.equal("2");
 
     const yielded2 = await this.halp.calculateYield(1000000000, 2);
-    expect(yielded2.toString()).to.equal("1000000004");
+    expect(yielded2.toString()).to.equal("4");
 
     const yielded3 = await this.halp.calculateYield(1000000000, 31556952);
-    expect(yielded3.toString()).to.equal("1069999999");
-
+    expect(yielded3.toString()).to.equal("69999999");
     //TODO: test short curcuit
 
     //TODO: test functional limits before overflow
@@ -98,25 +106,29 @@ contract('HalpCoin', accounts => {
   });
 
   it('should stake correctly', async function () {
-    await initializeAccounts.call(this, accounts, [10000000000, 20000000000, 30000000000]);
+    await initializeAccounts.call(this, accounts, [1000000000]);
 
-    let fMsg;
-    try {
-      await this.halp.reifyYield(accounts[0]);
-    }
-    catch (e) {
-      fMsg = e.reason;
-    }
-    expect(fMsg).to.equal('MstBeStkd');
+    expect(await getErrorMsg(() => this.halp.reifyYield(accounts[0]))).to.equal('MstBeStkd');
 
     await this.halp.stakeWallet();
 
-    await this.halp.reifyYield(accounts[0]);
+    //await this.halp.reifyYield(accounts[0]);
 
     await this.halp.voteForAddress(accounts[4]);
 
-    await increaseTime(1086401);
+    await increaseTime(31556952);
 
     await this.halp.unstakeWallet();
+
+    let charityWallet = await this.halp.balanceOf(accounts[4]);
+    expect(charityWallet.toString()).to.satisfy(s =>
+      s == "69999998" || s == "70000002"
+    );
+  });
+
+  it('should not allow small users to stake', async function () {
+    await initializeAccounts.call(this, accounts, [1000, 100000000000]);
+
+    expect(await getErrorMsg(() => this.halp.stakeWallet())).to.equal('InsfcntFnds');
   });
 });

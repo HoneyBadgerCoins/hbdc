@@ -98,7 +98,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     require(!isStaked(sender));
 
-    require(_canStake(sender), "Wallet needs sufficient funds to stake");
+    require(_canStake(sender), "InsfcntFnds");
 
     currentlyStaked[sender] = true;
     currentlyLocked[sender] = false;
@@ -207,7 +207,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
         n /= 2;
       }
     }
-    return uint256(fixedPrincipal.fromFixed());
+    return uint256(fixedPrincipal.fromFixed()) - principal;
   }
 
   function getCompoundingFactor(address wallet) public view returns (uint) {
@@ -222,18 +222,24 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
 
     if (compoundingFactor < 7200) return;
 
+    emit Trace2(_balances[wallet], compoundingFactor);
     uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
+    emit Trace(yield);
 
     _totalSupply = _totalSupply.add(yield.mul(2));
 
     stakeTimes[wallet] = block.timestamp;
 
     _balances[wallet] = _balances[wallet].add(yield);
+    emit Trace(yield);
     _balances[currentCharityWallet] = _balances[currentCharityWallet].add(yield);
   }
 
+  event Trace2(uint n, uint r);
+  event Trace(uint n);
+
   function _canStake(address wallet) private view returns (bool) {
-    return _balances[wallet] > _totalSupply.div(200);
+    return _balances[wallet] > _totalSupply.div(1000);
   }
 
   function name() external view returns (string memory) {
