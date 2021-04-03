@@ -131,4 +131,6 @@ contract('HalpCoin', accounts => {
 
     expect(await getErrorMsg(() => this.halp.stakeWallet())).to.equal('InsfcntFnds');
   });
+
+  //TODO: compounding reifications should be accurate
 });

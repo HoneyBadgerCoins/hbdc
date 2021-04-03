@@ -174,10 +174,18 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
       }
     }
 
-    //TODO: might this make something throw on unvote?
-    require(winner != address(0));
+    if (currentCharityWallet == winner) return;
+
+    if (currentCharityWallet != address(0) && isStaked[currentCharityWallet]) {
+      stakeTimes[currentCharityWallet] = block.timestamp;
+    }
+
+    if (winner != address(0) && isStaked[winner]) {
+      reifyYield(winner);
+    }
 
     currentCharityWallet = winner;
+
   }
 
   //  removeVote must call recalculateCharityWallet, but addVote doesn't have to
@@ -218,6 +226,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function reifyYield(address wallet) public {
+    if (currentCharityWallet == wallet) return;
     require(isStaked(wallet), 'MstBeStkd');
     require(isUnlocked(wallet));
 
