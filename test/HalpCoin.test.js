@@ -5,13 +5,11 @@ const { expect } = require('chai');
 async function initializeAccounts(accounts, accountValues) {
   await this.bank.setAuthorizedContract(this.halp.address);
   for (let i = 0; i < accountValues.length; i++) {
-    console.log(accounts[i], accountValues[i]);
-    await this.bank._testInitAccount(accounts[1], accountValues[i]);
+    await this.bank._testInitAccount(accounts[i], accountValues[i]);
   }
   await increaseTime(386401);
 
   for (let j = 0; j < accountValues.length; j++) {
-    console.log(accounts[j]);
     await this.halp._testReq(accounts[j]);
   }
 }
@@ -71,13 +69,12 @@ contract('HalpCoin', accounts => {
   it('should initialize supply by default', async function () {
     var ts = await this.halp.totalSupply();
 
-    assert.equal(ts.toString(), '10000000', 'total supply isn\'t right');
+    assert.equal(ts.toString(), '0', 'total supply isn\'t right');
   });
 
   //TODO: break this down
   it('should be able to authenticate with the bank', async function () {
     await this.bank.setAuthorizedContract(this.halp.address);
-
     await this.bank._testInitAccount(accounts[0], 20000000000);
 
     var fundsAdded = await this.halp.requisitionFromBank();
@@ -85,15 +82,6 @@ contract('HalpCoin', accounts => {
 
     var balanceOf = await this.halp.balanceOf(accounts[0]);
     expect(balanceOf.toString()).to.equal('10000000000');
-
-    let eMsg;
-    try {
-      var f2 = await this.halp.requisitionFromBank();
-    }
-    catch (e) {
-      eMsg = e.reason;
-    }
-    expect(eMsg).to.equal('0TimePassed');
 
     await increaseTime(1);
 
@@ -110,6 +98,25 @@ contract('HalpCoin', accounts => {
   });
 
   it('should stake correctly', async function () {
-    await initializeAccounts.call(this, accounts, [10000000000]);
+    await initializeAccounts.call(this, accounts, [10000000000, 20000000000, 30000000000]);
+
+    let fMsg;
+    try {
+      await this.halp.reifyYield(accounts[0]);
+    }
+    catch (e) {
+      fMsg = e.reason;
+    }
+    expect(fMsg).to.equal('MstBeStkd');
+
+    await this.halp.stakeWallet();
+
+    await this.halp.reifyYield(accounts[0]);
+
+    await this.halp.voteForAddress(accounts[4]);
+
+    await increaseTime(1086401);
+
+    await this.halp.unstakeWallet();
   });
 });

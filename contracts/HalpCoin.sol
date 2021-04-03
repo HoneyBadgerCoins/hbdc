@@ -24,9 +24,9 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   address grumpyBankAddress;
 
   function initialize(address bankAddress) initializer public {
-    _name = 'HalpCoin';
-    _symbol = 'HALP';
-    _totalSupply = 10000000;
+    _name = 'MeowDAO';
+    _symbol = 'Meow';
+    _totalSupply = 0;
     
     //TODO: this needs lots more thinking
     _balances[address(0)] = _totalSupply;
@@ -47,6 +47,8 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     uint256 amount = grumpBank.requisitionTokens(sender);
     _balances[sender] = _balances[sender].add(amount);
     emit Withdrawal(sender, amount);
+
+    _totalSupply += amount; 
     return amount;
   }
 
@@ -57,6 +59,8 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     uint256 amount = grumpBank.requisitionTokens(msg.sender);
     _balances[msg.sender] = _balances[msg.sender].add(amount);
     emit Withdrawal(msg.sender, amount);
+
+    _totalSupply += amount; 
     return amount;
   }
 
@@ -100,7 +104,6 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
     currentlyLocked[sender] = false;
     currentVotes[sender] = address(0);
     stakeTimes[sender] = block.timestamp;
-
 
     return true;
   }
@@ -212,7 +215,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable {
   }
 
   function reifyYield(address wallet) public {
-    require(isStaked(wallet));
+    require(isStaked(wallet), 'MstBeStkd');
     require(isUnlocked(wallet));
 
     uint compoundingFactor = getCompoundingFactor(wallet);

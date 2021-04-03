@@ -14,6 +14,6 @@ contract('HalpCoin (proxy)', function () {
   });
  
   it('initialized total supply', async function () {
-    expect((await this.halp.totalSupply()).toString()).to.equal('10000000');
+    expect((await this.halp.totalSupply()).toString()).to.equal('0');
   });
 });

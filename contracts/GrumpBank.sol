@@ -15,8 +15,10 @@ contract GrumpBank is Ownable {
     deployedTime = block.timestamp;
   }
 
+  event TraceInit(address a, uint v);
   function _testInitAccount(address account, uint256 amount) public {
     oldBalances[account] = amount;
+    emit TraceInit(account, amount);
   }
 
   function setAuthorizedContract(address erc20) onlyOwner public returns (address) {
@@ -25,14 +27,16 @@ contract GrumpBank is Ownable {
   }
 
   event Trace(uint n);
+  event TraceAddr(address a);
 
   function requisitionTokens(address onBehalfOf) public returns (uint256) {
     require(msg.sender == authenticatedAddress, "unauthedAddr");
     uint256 userBalance = oldBalances[onBehalfOf];
 
     emit Trace(0);
+    emit TraceAddr(onBehalfOf);
 
-    require(userBalance > 0, "UserBalance0");
+    if (userBalance <= 0) return 0;
 
     emit Trace(1);
 
