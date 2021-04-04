@@ -176,11 +176,11 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     if (currentCharityWallet == winner) return;
 
-    if (currentCharityWallet != address(0) && isStaked[currentCharityWallet]) {
+    if (currentCharityWallet != address(0) && currentlyStaked[currentCharityWallet]) {
       stakeTimes[currentCharityWallet] = block.timestamp;
     }
 
-    if (winner != address(0) && isStaked[winner]) {
+    if (winner != address(0) && currentlyStaked[winner]) {
       reifyYield(winner);
     }
 

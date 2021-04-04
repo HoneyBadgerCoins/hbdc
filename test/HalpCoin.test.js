@@ -54,7 +54,7 @@ contract('HalpCoin', accounts => {
   beforeEach(async function () {
     this.bank = await GrumpBank.new();
     this.halp = await HalpCoin.new(this.bank.address, {initializer: '__HalpCoin_init'});
-    await this.halp.initialize(this.bank.address);
+    await this.halp.__HalpCoin_init(this.bank.address);
   });
 
   it('should calculateYield correctly', async function () {
@@ -122,7 +122,7 @@ contract('HalpCoin', accounts => {
 
     let charityWallet = await this.halp.balanceOf(accounts[4]);
     expect(charityWallet.toString()).to.satisfy(s =>
-      s == "69999998" || s == "70000002"
+      s == '69999999' || s == "69999998" || s == "70000002"
     );
   });
 
