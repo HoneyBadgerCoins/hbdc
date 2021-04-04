@@ -147,4 +147,11 @@ contract('HalpCoin', accounts => {
   //        transaction
   //TODO: it should take a portion of each transaction for the charity wallet
   //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
+  //TODO: should allow a user to requisitionFromBank into a staked wallet but should reify first
+
+  //TODO: think about failure modes regarding the banking process
+  //        initial filling
+  //        sealing initial deposits
+  //        preventing new contracts from being authorized
+  //        ...?
 });
