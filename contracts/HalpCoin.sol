@@ -43,7 +43,8 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   event Withdrawal(address to, uint amount);
 
-  function _testReq(address sender) public returns (uint256) {
+  //TODO: this is public for testing, make private
+  function _requisitionFromBankFor(address sender) public returns (uint256) {
     require(currentlyStaked[sender] == false, "wallet cannot be staked");
     GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
 
@@ -56,15 +57,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function requisitionFromBank() public returns (uint256) {
-    require(currentlyStaked[_msgSender()] == false, "wallet cannot be staked");
-    GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
-
-    uint256 amount = grumpBank.requisitionTokens(_msgSender());
-    _balances[_msgSender()] = _balances[_msgSender()] + amount;
-    emit Withdrawal(_msgSender(), amount);
-
-    _totalSupply += amount; 
-    return amount;
+    return _requisitionFromBankFor(_msgSender());
   }
 
   mapping (address => uint256) private _balances;
@@ -96,11 +89,9 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return block.timestamp - stakeTimes[wallet] > 86400;
   }
 
-  function stakeWallet() public returns (bool) {
-    address sender = _msgSender();
-
+  //TODO: make private, is public for testing
+  function _stakeWalletFor(address sender) public returns (bool) {
     require(!isStaked(sender));
-
     require(_canStake(sender), "InsfcntFnds");
 
     currentlyStaked[sender] = true;
@@ -109,6 +100,9 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
     stakeTimes[sender] = block.timestamp;
 
     return true;
+  }
+  function stakeWallet() public returns (bool) {
+    return _stakeWalletFor(_msgSender());
   }
 
   function unstakeWallet() public {

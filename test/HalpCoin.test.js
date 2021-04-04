@@ -10,7 +10,7 @@ async function initializeAccounts(accounts, accountValues) {
   await increaseTime(386401);
 
   for (let j = 0; j < accountValues.length; j++) {
-    await this.halp._testReq(accounts[j]);
+    await this.halp._requisitionFromBankFor(accounts[j]);
   }
 }
 
@@ -122,7 +122,7 @@ contract('HalpCoin', accounts => {
 
     let charityWallet = await this.halp.balanceOf(accounts[4]);
     expect(charityWallet.toString()).to.satisfy(s =>
-      s == '69999999' || s == "69999998" || s == "70000002"
+      s >= '69999998' && s <= '70000002'
     );
   });
 
@@ -132,7 +132,7 @@ contract('HalpCoin', accounts => {
     expect(await getErrorMsg(() => this.halp.stakeWallet())).to.equal('InsfcntFnds');
   });
 
-  it.only('should accurately calculate yield with intermediate reifications', async function () {
+  it('should accurately calculate yield with intermediate reifications', async function () {
     await initializeAccounts.call(this, accounts, [1000000000]);
     await this.halp.stakeWallet();
     await increaseTime(10000000);
@@ -144,11 +144,16 @@ contract('HalpCoin', accounts => {
 
     let bal = await this.halp.balanceOf(accounts[0]);
     expect(bal.toString()).to.satisfy(b =>
-      b == '1069999999' || b == "1069999998" || b == "1070000002" || b == "1070000004"
+      b >= '1069999999' && b <= "1070000008"
     );
   });
 
-  //TODO: should apply and unapply a users vote weight correctly, and determine the charity wallet accurately with any sequence
+  it('should apply and unapply user votes correctly', async function () {
+    await initializeAccounts.call(this, accounts, [1000000000, 2000000000, 1500000000]);
+  });
+
+  //TODO: should apply and unapply a users vote weight correctly,
+  //        and determine the charity wallet accurately with any sequence
   //TODO: not allow staked wallets to send or receive funds
   //TODO: somehow have tests that verify funds go to the right place (??? vague)
   //TODO: handle pausing staked rewards correctly
