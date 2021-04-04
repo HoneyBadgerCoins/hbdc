@@ -145,4 +145,6 @@ contract('HalpCoin', accounts => {
   //        voting
   //        reification
   //        transaction
+  //TODO: it should take a portion of each transaction for the charity wallet
+  //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
 });
