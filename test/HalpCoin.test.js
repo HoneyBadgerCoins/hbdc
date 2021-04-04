@@ -132,5 +132,17 @@ contract('HalpCoin', accounts => {
     expect(await getErrorMsg(() => this.halp.stakeWallet())).to.equal('InsfcntFnds');
   });
 
-  //TODO: compounding reifications should be accurate
+  //TODO: should accurately calculate yield with intermediate reifications
+  //TODO: should apply and unapply a users vote weight correctly, and determine the charity wallet accurately with any sequence
+  //TODO: not allow staked wallets to send or receive funds
+  //TODO: somehow have tests that verify funds go to the right place (??? vague)
+  //TODO: handle pausing staked rewards correctly
+  //        if a staked wallet ever becomes the charity wallet, it should instantly reify, and then begin its yield term
+  //          when it is no longer the charity waller
+  //        it should also work correctly if it stops staking before being unselected as the charity wallet
+  //TODO: should allow a user to unstake without reification using a separate function
+  //TODO: handle account(0) as the charity wallet safely
+  //        voting
+  //        reification
+  //        transaction
 });
