@@ -27,6 +27,8 @@ async function getErrorMsg(f) {
 const HalpCoin = artifacts.require('HalpCoin');
 const GrumpBank = artifacts.require('GrumpBank');
 
+const address0 = '0x0000000000000000000000000000000000000000';
+
 const increaseTime = function(duration) {
   const id = Date.now()
 
@@ -150,10 +152,38 @@ contract('HalpCoin', accounts => {
 
   it('should apply and unapply user votes correctly', async function () {
     await initializeAccounts.call(this, accounts, [1000000000, 2000000000, 1500000000]);
-  });
 
-  //TODO: should apply and unapply a users vote weight correctly,
-  //        and determine the charity wallet accurately with any sequence
+    await this.halp._stakeWalletFor(accounts[0]);
+    await this.halp._stakeWalletFor(accounts[1]);
+    await this.halp._stakeWalletFor(accounts[2]);
+
+    await this.halp.voteForAddress(accounts[6]);
+
+    expect(await this.halp.getCharityWallet()).to.equal(accounts[6]);
+
+    await this.halp._voteForAddressBy(accounts[5], accounts[1]);
+
+    expect(await this.halp.getCharityWallet()).to.equal(accounts[5]);
+
+    await this.halp._voteForAddressBy(accounts[6], accounts[2]);
+
+    expect(await this.halp.getCharityWallet()).to.equal(accounts[6]);
+    
+    await this.halp.voteForAddress(address0);
+
+    expect(await this.halp.getCharityWallet()).to.equal(accounts[5]);
+
+    await increaseTime(31556952000);
+
+    await this.halp.reifyYield(accounts[2]);
+
+    await this.halp._voteForAddressBy(accounts[6], accounts[2]);
+
+    expect(await this.halp.getCharityWallet()).to.equal(accounts[6]);
+
+    //TODO: test precise balances and also test when an account receives funds while staked and voted
+  });
+  //TODO: should allow a user to update their vote weight by revoting for the same address
   //TODO: not allow staked wallets to send or receive funds
   //TODO: somehow have tests that verify funds go to the right place (??? vague)
   //TODO: handle pausing staked rewards correctly

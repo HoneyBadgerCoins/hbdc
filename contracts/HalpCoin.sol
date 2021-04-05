@@ -78,6 +78,10 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   //TODO: needs initialization
   address currentCharityWallet;
 
+  function getCharityWallet() external view returns (address) {
+    return currentCharityWallet;
+  }
+
   function isStaked(address wallet) public view returns (bool) {
     return currentlyStaked[wallet];
   }
@@ -125,9 +129,8 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
     }
   }
 
-  //TODO: ensure you cannot vote for a staked wallet
-  function voteForAddress(address charityWallet) public {
-    address sender = _msgSender();
+  //TODO: make this private
+  function _voteForAddressBy(address charityWallet, address sender) public {
 
     require(isStaked(sender));
     require(isUnlocked(sender));
@@ -150,6 +153,9 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
     currentVotes[sender] = charityWallet;
 
     updateCharityWallet();
+  }
+  function voteForAddress(address charityWallet) public {
+    _voteForAddressBy(charityWallet, _msgSender());
   }
 
   function updateCharityWallet() public {
