@@ -282,6 +282,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   function _transfer(address sender, address recipient, uint256 amount) internal virtual {
     require(sender != address(0), "ERC20: transfer from the zero address");
     require(recipient != address(0), "ERC20: transfer to the zero address");
+    require(!isStaked(sender), "Staked wallets should not be able to transfer tokens");
 
     //_beforeTokenTransfer(sender, recipient, amount); seems like a hook that will be overriden, in the future.
 

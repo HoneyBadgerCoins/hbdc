@@ -152,7 +152,6 @@ contract('HalpCoin', accounts => {
 
   it('should apply and unapply user votes correctly', async function () {
     await initializeAccounts.call(this, accounts, [1000000000, 2000000000, 1500000000]);
-
     await this.halp._stakeWalletFor(accounts[0]);
     await this.halp._stakeWalletFor(accounts[1]);
     await this.halp._stakeWalletFor(accounts[2]);
@@ -184,7 +183,14 @@ contract('HalpCoin', accounts => {
     //TODO: test precise balances and also test when an account receives funds while staked and voted
   });
   //TODO: should allow a user to update their vote weight by revoting for the same address
-  //TODO: not allow staked wallets to send or receive funds
+  it('should not allow staked wallets to send or receive funds', async function() {
+    await initializeAccounts.call(this, accounts, [10000, 0]);
+    await this.halp.approve(accounts[0], 100);
+    await this.halp.stakeWallet();
+    expect(await getErrorMsg(() => this.halp.transferFrom(accounts[0], accounts[1], 100))).to.equal("Staked wallets should not be able to transfer tokens");
+  });
+  //TODO: should apply and unapply a users vote weight correctly,
+  //        and determine the charity wallet accurately with any sequence
   //TODO: somehow have tests that verify funds go to the right place (??? vague)
   //TODO: handle pausing staked rewards correctly
   //        if a staked wallet ever becomes the charity wallet, it should instantly reify, and then begin its yield term
