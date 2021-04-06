@@ -1,6 +1,9 @@
 // test/HalpCoin.test.js
 // Load dependencies
 const { expect } = require('chai');
+
+const { oracle } = require('@chainlink/test-helpers')
+const { expectRevert, time } = require('@openzeppelin/test-helpers')
  
 async function initializeAccounts(accounts, accountValues) {
   await this.bank.setAuthorizedContract(this.halp.address);
@@ -53,10 +56,28 @@ const increaseTime = function(duration) {
 }
  
 contract('HalpCoin', accounts => {
+
+  const jobId = web3.utils.toHex('4c7b7ffb66b344fbaa64995af81e355a')
+  const url =
+    'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,EUR,JPY'
+  const path = 'USD'
+
+  const defaultAccount = accounts[0]
+  const oracleNode = accounts[1]
+
+  let link, oc;
+
   beforeEach(async function () {
-    this.bank = await GrumpBank.new();
+    link = await LinkToken.new({ from: defaultAccount })
+    oc = await Oracle.new(link.address, { from: defaultAccount })
+
+    this.bank = await GrumpBank.new(link);
     this.halp = await HalpCoin.new(this.bank.address, {initializer: '__HalpCoin_init'});
     await this.halp.__HalpCoin_init(this.bank.address);
+
+    await oc.setFulfillmentPermission(oracleNode, true, {
+      from: defaultAccount,
+    })
   });
 
   it('should calculateYield correctly', async function () {
