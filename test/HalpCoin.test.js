@@ -4,6 +4,10 @@ const { expect } = require('chai');
 
 const { oracle } = require('@chainlink/test-helpers')
 const { expectRevert, time } = require('@openzeppelin/test-helpers')
+
+const { LinkToken } = require('@chainlink/contracts/truffle/v0.4/LinkToken')
+const { Oracle } = require('@chainlink/contracts/truffle/v0.6/Oracle')
+
  
 async function initializeAccounts(accounts, accountValues) {
   await this.bank.setAuthorizedContract(this.halp.address);
@@ -60,7 +64,6 @@ contract('HalpCoin', accounts => {
   const jobId = web3.utils.toHex('4c7b7ffb66b344fbaa64995af81e355a')
   const url =
     'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,EUR,JPY'
-  const path = 'USD'
 
   const defaultAccount = accounts[0]
   const oracleNode = accounts[1]
@@ -71,7 +74,7 @@ contract('HalpCoin', accounts => {
     link = await LinkToken.new({ from: defaultAccount })
     oc = await Oracle.new(link.address, { from: defaultAccount })
 
-    this.bank = await GrumpBank.new(link);
+    this.bank = await GrumpBank.new(link.address, oc.address, jobId);
     this.halp = await HalpCoin.new(this.bank.address, {initializer: '__HalpCoin_init'});
     await this.halp.__HalpCoin_init(this.bank.address);
 

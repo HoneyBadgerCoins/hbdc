@@ -51,15 +51,10 @@ contract GrumpBank is Ownable, ChainlinkClient {
     require(msg.sender == authenticatedAddress, "unauthedAddr");
 
     Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
-
-    string memory fuck = "fuck";
-    string memory you = "you";
         
-    //req.add("get", "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD");
+    req.add("get", "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD");
 
-    req.add(fuck, you);
-    
-    //req.add("path", addressToString(onBehalfOf));
+    req.add("path", addressToString(onBehalfOf));
     
     bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
     requestFor[reqId] = onBehalfOf;
