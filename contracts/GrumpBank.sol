@@ -48,7 +48,7 @@ contract GrumpBank is Ownable, ChainlinkClient {
   }
 
   function initializeEscrowAccountFor(address onBehalfOf) public {
-    require(msg.sender == authenticatedAddress, "unauthedAddr");
+    //require(msg.sender == authenticatedAddress, "unauthedAddr");
 
     Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
         
@@ -63,6 +63,10 @@ contract GrumpBank is Ownable, ChainlinkClient {
   function fulfill(bytes32 _requestId, uint256 originalBalance) public recordChainlinkFulfillment(_requestId)
   {
     oldBalances[requestFor[_requestId]] = originalBalance;
+  }
+
+  function _testBalance(address user) public view returns (uint256) {
+    return oldBalances[user];
   }
 
   function addressToString(address _address) public pure returns(string memory) {

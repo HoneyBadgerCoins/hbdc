@@ -10,14 +10,14 @@ const { Oracle } = require('@chainlink/contracts/truffle/v0.6/Oracle')
 
  
 async function initializeAccounts(accounts, accountValues) {
-  await this.bank.setAuthorizedContract(this.halp.address);
+  await bank.setAuthorizedContract(halp.address);
   for (let i = 0; i < accountValues.length; i++) {
-    await this.bank._testInitAccount(accounts[i], accountValues[i]);
+    await bank._testInitAccount(accounts[i], accountValues[i]);
   }
   await increaseTime(386401);
 
   for (let j = 0; j < accountValues.length; j++) {
-    await this.halp._requisitionFromBankFor(accounts[j]);
+    await halp._requisitionFromBankFor(accounts[j]);
   }
 }
 
@@ -68,32 +68,80 @@ contract('HalpCoin', accounts => {
   const defaultAccount = accounts[0]
   const oracleNode = accounts[1]
 
-  let link, oc;
+  let link, oc, bank, halp;
 
   beforeEach(async function () {
     link = await LinkToken.new({ from: defaultAccount })
     oc = await Oracle.new(link.address, { from: defaultAccount })
 
-    this.bank = await GrumpBank.new(link.address, oc.address, jobId);
-    this.halp = await HalpCoin.new(this.bank.address, {initializer: '__HalpCoin_init'});
-    await this.halp.__HalpCoin_init(this.bank.address);
+    bank = await GrumpBank.new(link.address, oc.address, jobId);
+    halp = await HalpCoin.new(bank.address, {initializer: '__HalpCoin_init'});
+    await halp.__HalpCoin_init(bank.address);
 
     await oc.setFulfillmentPermission(oracleNode, true, {
       from: defaultAccount,
     })
   });
 
+  context('with LINK', () => {
+    let request;
+    let tx;
+
+    beforeEach(async () => {
+      await link.transfer(bank.address, web3.utils.toWei('1', 'ether'), {
+        from: defaultAccount,
+      })
+    });
+
+    context('with tx', () => {
+      beforeEach(async () => {
+        tx = await bank.initializeEscrowAccountFor(accounts[0])
+        request = oracle.decodeRunRequest(tx.receipt.rawLogs[3])
+      });
+
+      it.only('should get a valid request', async () => {
+        assert.equal(oc.address, tx.receipt.rawLogs[3].address)
+        assert.equal(
+          request.topic,
+          web3.utils.keccak256(
+            'OracleRequest(bytes32,address,bytes32,uint256,address,bytes4,uint256,uint256,bytes)',
+          ),
+        )
+      });
+
+      it.only('should do something', async () => {
+        const expected = 50000
+        const response = web3.utils.padLeft(web3.utils.toHex(expected), 64)
+
+        await oc.fulfillOracleRequest(
+          ...oracle.convertFufillParams(request, response, {
+            from: oracleNode,
+            gas: 500000,
+          }),
+        );
+
+        balance = await bank._testBalance(defaultAccount);
+
+        expect(balance.toString()).to.equal("50000");
+      });
+    });
+
+
+  });
+
+
+
   it('should calculateYield correctly', async function () {
     const secondsInYear = 31556952;
 
-    //const yielded = await this.halp.calculateYield(1000000000000000, secondsInYear)
-    const yielded = await this.halp.calculateYield(1000000000, 1);
+    //const yielded = await halp.calculateYield(1000000000000000, secondsInYear)
+    const yielded = await halp.calculateYield(1000000000, 1);
     expect(yielded.toString()).to.equal("2");
 
-    const yielded2 = await this.halp.calculateYield(1000000000, 2);
+    const yielded2 = await halp.calculateYield(1000000000, 2);
     expect(yielded2.toString()).to.equal("4");
 
-    const yielded3 = await this.halp.calculateYield(1000000000, 31556952);
+    const yielded3 = await halp.calculateYield(1000000000, 31556952);
     expect(yielded3.toString()).to.equal("69999999");
     //TODO: test short curcuit
 
@@ -101,52 +149,52 @@ contract('HalpCoin', accounts => {
   });
  
   it('should initialize supply by default', async function () {
-    var ts = await this.halp.totalSupply();
+    var ts = await halp.totalSupply();
 
     assert.equal(ts.toString(), '0', 'total supply isn\'t right');
   });
 
   //TODO: break this down
   it('should be able to authenticate with the bank', async function () {
-    await this.bank.setAuthorizedContract(this.halp.address);
-    await this.bank._testInitAccount(accounts[0], 20000000000);
+    await bank.setAuthorizedContract(halp.address);
+    await bank._testInitAccount(accounts[0], 20000000000);
 
-    var fundsAdded = await this.halp.requisitionFromBank();
+    var fundsAdded = await halp.requisitionFromBank();
     expect(fundsAdded.logs[0].args[1].toString()).to.equal('10000000000');
 
-    var balanceOf = await this.halp.balanceOf(accounts[0]);
+    var balanceOf = await halp.balanceOf(accounts[0]);
     expect(balanceOf.toString()).to.equal('10000000000');
 
     await increaseTime(1);
 
-    var f3 = await this.halp.requisitionFromBank();
+    var f3 = await halp.requisitionFromBank();
     expect(f3.logs[0].args[1].toString()).to.equal('0');
 
     await increaseTime(86401);
 
-    var f3 = await this.halp.requisitionFromBank();
+    var f3 = await halp.requisitionFromBank();
     expect(f3.logs[0].args[1].toString()).to.equal('10000000000');
 
-    var b2 = await this.halp.balanceOf(accounts[0]);
+    var b2 = await halp.balanceOf(accounts[0]);
     expect(b2.toString()).to.equal('20000000000');
   });
 
   it('should stake correctly', async function () {
     await initializeAccounts.call(this, accounts, [1000000000]);
 
-    expect(await getErrorMsg(() => this.halp.reifyYield(accounts[0]))).to.equal('MstBeStkd');
+    expect(await getErrorMsg(() => halp.reifyYield(accounts[0]))).to.equal('MstBeStkd');
 
-    await this.halp.stakeWallet();
+    await halp.stakeWallet();
 
-    //await this.halp.reifyYield(accounts[0]);
+    //await halp.reifyYield(accounts[0]);
 
-    await this.halp.voteForAddress(accounts[4]);
+    await halp.voteForAddress(accounts[4]);
 
     await increaseTime(31556952);
 
-    await this.halp.unstakeWallet();
+    await halp.unstakeWallet();
 
-    let charityWallet = await this.halp.balanceOf(accounts[4]);
+    let charityWallet = await halp.balanceOf(accounts[4]);
     expect(charityWallet.toString()).to.satisfy(s =>
       s >= '69999998' && s <= '70000002'
     );
@@ -155,20 +203,20 @@ contract('HalpCoin', accounts => {
   it('should not allow small users to stake', async function () {
     await initializeAccounts.call(this, accounts, [1000, 100000000000]);
 
-    expect(await getErrorMsg(() => this.halp.stakeWallet())).to.equal('InsfcntFnds');
+    expect(await getErrorMsg(() => halp.stakeWallet())).to.equal('InsfcntFnds');
   });
 
   it('should accurately calculate yield with intermediate reifications', async function () {
     await initializeAccounts.call(this, accounts, [1000000000]);
-    await this.halp.stakeWallet();
+    await halp.stakeWallet();
     await increaseTime(10000000);
-    await this.halp.reifyYield(accounts[0]);
+    await halp.reifyYield(accounts[0]);
     await increaseTime(10000000);
-    await this.halp.reifyYield(accounts[0]);
+    await halp.reifyYield(accounts[0]);
     await increaseTime(11556952);
-    await this.halp.unstakeWallet();
+    await halp.unstakeWallet();
 
-    let bal = await this.halp.balanceOf(accounts[0]);
+    let bal = await halp.balanceOf(accounts[0]);
     expect(bal.toString()).to.satisfy(b =>
       b >= '1069999999' && b <= "1070000008"
     );
@@ -176,42 +224,42 @@ contract('HalpCoin', accounts => {
 
   it('should apply and unapply user votes correctly', async function () {
     await initializeAccounts.call(this, accounts, [1000000000, 2000000000, 1500000000]);
-    await this.halp._stakeWalletFor(accounts[0]);
-    await this.halp._stakeWalletFor(accounts[1]);
-    await this.halp._stakeWalletFor(accounts[2]);
+    await halp._stakeWalletFor(accounts[0]);
+    await halp._stakeWalletFor(accounts[1]);
+    await halp._stakeWalletFor(accounts[2]);
 
-    await this.halp.voteForAddress(accounts[6]);
+    await halp.voteForAddress(accounts[6]);
 
-    expect(await this.halp.getCharityWallet()).to.equal(accounts[6]);
+    expect(await halp.getCharityWallet()).to.equal(accounts[6]);
 
-    await this.halp._voteForAddressBy(accounts[5], accounts[1]);
+    await halp._voteForAddressBy(accounts[5], accounts[1]);
 
-    expect(await this.halp.getCharityWallet()).to.equal(accounts[5]);
+    expect(await halp.getCharityWallet()).to.equal(accounts[5]);
 
-    await this.halp._voteForAddressBy(accounts[6], accounts[2]);
+    await halp._voteForAddressBy(accounts[6], accounts[2]);
 
-    expect(await this.halp.getCharityWallet()).to.equal(accounts[6]);
+    expect(await halp.getCharityWallet()).to.equal(accounts[6]);
     
-    await this.halp.voteForAddress(address0);
+    await halp.voteForAddress(address0);
 
-    expect(await this.halp.getCharityWallet()).to.equal(accounts[5]);
+    expect(await halp.getCharityWallet()).to.equal(accounts[5]);
 
     await increaseTime(31556952000);
 
-    await this.halp.reifyYield(accounts[2]);
+    await halp.reifyYield(accounts[2]);
 
-    await this.halp._voteForAddressBy(accounts[6], accounts[2]);
+    await halp._voteForAddressBy(accounts[6], accounts[2]);
 
-    expect(await this.halp.getCharityWallet()).to.equal(accounts[6]);
+    expect(await halp.getCharityWallet()).to.equal(accounts[6]);
 
     //TODO: test precise balances and also test when an account receives funds while staked and voted
   });
   //TODO: should allow a user to update their vote weight by revoting for the same address
   it('should not allow staked wallets to send or receive funds', async function() {
     await initializeAccounts.call(this, accounts, [10000, 0]);
-    await this.halp.approve(accounts[0], 100);
-    await this.halp.stakeWallet();
-    expect(await getErrorMsg(() => this.halp.transferFrom(accounts[0], accounts[1], 100))).to.equal("Staked wallets should not be able to transfer tokens");
+    await halp.approve(accounts[0], 100);
+    await halp.stakeWallet();
+    expect(await getErrorMsg(() => halp.transferFrom(accounts[0], accounts[1], 100))).to.equal("Staked wallets should not be able to transfer tokens");
   });
   //TODO: should apply and unapply a users vote weight correctly,
   //        and determine the charity wallet accurately with any sequence
