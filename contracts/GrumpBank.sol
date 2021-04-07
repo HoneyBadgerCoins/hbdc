@@ -7,6 +7,8 @@ import "@chainlink/contracts/src/v0.7/Chainlink.sol";
 contract GrumpBank is Ownable, ChainlinkClient {
   using Chainlink for Chainlink.Request;
 
+  mapping (address => bool) authorizedRequesters;
+  mapping (address => uint256) public initialBalances;
   mapping (address => uint256) public oldBalances;
   mapping (address => uint) requisitionTime;
   uint deployedTime;
@@ -47,12 +49,25 @@ contract GrumpBank is Ownable, ChainlinkClient {
     return erc20;
   }
 
-  function initializeEscrowAccountFor(address onBehalfOf) public {
-    //require(msg.sender == authenticatedAddress, "unauthedAddr");
+  event AccountNuked(account nuked);
 
+  //Nuke an account in the unlikely scenario someone breaches the initialization security measures
+  //Initialization logs will be monitored to ensure they match up with the correct value
+  function nukeAccount(account toNuke) onlyOwner public {
+    oldBalances[toNuke] = 0;
+    emit AccountNuked(toNuke);
+  }
+
+  function requestAuthorization() public {
+    authorizedRequesters[msg.sender] = true;
+  }
+
+  //TODO: make this only for for msg.sender;
+  function initializeEscrowAccountFor(address onBehalfOf) public {
+    require(authorizedRequesters[onBehalfOf], "MstFrstAuthriz");
     Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
         
-    req.add("get", "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD");
+    req.add("get", "TODO:IPFS_URSL");
 
     req.add("path", addressToString(onBehalfOf));
     
@@ -60,9 +75,15 @@ contract GrumpBank is Ownable, ChainlinkClient {
     requestFor[reqId] = onBehalfOf;
   }
 
+  event InitializeEscrowAccount(address user, uint256 balance);
+
   function fulfill(bytes32 _requestId, uint256 originalBalance) public recordChainlinkFulfillment(_requestId)
   {
-    oldBalances[requestFor[_requestId]] = originalBalance;
+    address user = requestFor[_requestId];
+    require(initialBalances[user] == 0);
+    initialBalances[user] = originalBalance;
+    oldBalances[user] = originalBalance;
+    emit(InitializeEscrowAccount(user, balance);
   }
 
   function _testBalance(address user) public view returns (uint256) {
