@@ -49,11 +49,11 @@ contract GrumpBank is Ownable, ChainlinkClient {
     return erc20;
   }
 
-  event AccountNuked(account nuked);
+  event AccountNuked(address nuked);
 
   //Nuke an account in the unlikely scenario someone breaches the initialization security measures
   //Initialization logs will be monitored to ensure they match up with the correct value
-  function nukeAccount(account toNuke) onlyOwner public {
+  function nukeAccount(address toNuke) onlyOwner public {
     oldBalances[toNuke] = 0;
     emit AccountNuked(toNuke);
   }
@@ -83,7 +83,7 @@ contract GrumpBank is Ownable, ChainlinkClient {
     require(initialBalances[user] == 0);
     initialBalances[user] = originalBalance;
     oldBalances[user] = originalBalance;
-    emit(InitializeEscrowAccount(user, balance);
+    emit InitializeEscrowAccount(user, originalBalance);
   }
 
   function _testBalance(address user) public view returns (uint256) {
