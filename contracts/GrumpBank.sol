@@ -67,7 +67,7 @@ contract GrumpBank is Ownable, ChainlinkClient {
     require(authorizedRequesters[onBehalfOf], "MstFrstAuthriz");
     Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
         
-    req.add("get", "TODO:IPFS_URSL");
+    req.add("get", "https://ipfs.io/ipfs/Qmd72sL7sk7RQ7hkjm2UZ38tpTRC1ZMvGBxFw1U3GWkk8P");
 
     req.add("path", addressToString(onBehalfOf));
     

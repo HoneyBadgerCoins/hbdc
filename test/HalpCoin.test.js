@@ -9,7 +9,7 @@ const { LinkToken } = require('@chainlink/contracts/truffle/v0.4/LinkToken')
 const { Oracle } = require('@chainlink/contracts/truffle/v0.6/Oracle')
 
  
-async function initializeAccounts(accounts, accountValues) {
+async function initializeAccounts(bank, halp, accounts, accountValues) {
   await bank.setAuthorizedContract(halp.address);
   for (let i = 0; i < accountValues.length; i++) {
     await bank._testInitAccount(accounts[i], accountValues[i]);
@@ -95,11 +95,12 @@ contract('HalpCoin', accounts => {
 
     context('with tx', () => {
       beforeEach(async () => {
+        await bank.requestAuthorization();
         tx = await bank.initializeEscrowAccountFor(accounts[0])
         request = oracle.decodeRunRequest(tx.receipt.rawLogs[3])
       });
 
-      it.only('should get a valid request', async () => {
+      it('should get a valid request', async () => {
         assert.equal(oc.address, tx.receipt.rawLogs[3].address)
         assert.equal(
           request.topic,
@@ -109,7 +110,7 @@ contract('HalpCoin', accounts => {
         )
       });
 
-      it.only('should do something', async () => {
+      it('should do something', async () => {
         const expected = 50000
         const response = web3.utils.padLeft(web3.utils.toHex(expected), 64)
 
@@ -180,7 +181,7 @@ contract('HalpCoin', accounts => {
   });
 
   it('should stake correctly', async function () {
-    await initializeAccounts.call(this, accounts, [1000000000]);
+    await initializeAccounts(bank, halp, accounts, [1000000000]);
 
     expect(await getErrorMsg(() => halp.reifyYield(accounts[0]))).to.equal('MstBeStkd');
 
@@ -201,13 +202,13 @@ contract('HalpCoin', accounts => {
   });
 
   it('should not allow small users to stake', async function () {
-    await initializeAccounts.call(this, accounts, [1000, 100000000000]);
+    await initializeAccounts(bank, halp, accounts, [1000, 100000000000]);
 
     expect(await getErrorMsg(() => halp.stakeWallet())).to.equal('InsfcntFnds');
   });
 
   it('should accurately calculate yield with intermediate reifications', async function () {
-    await initializeAccounts.call(this, accounts, [1000000000]);
+    await initializeAccounts(bank, halp, accounts, [1000000000]);
     await halp.stakeWallet();
     await increaseTime(10000000);
     await halp.reifyYield(accounts[0]);
@@ -223,7 +224,7 @@ contract('HalpCoin', accounts => {
   });
 
   it('should apply and unapply user votes correctly', async function () {
-    await initializeAccounts.call(this, accounts, [1000000000, 2000000000, 1500000000]);
+    await initializeAccounts(bank, halp, accounts, [1000000000, 2000000000, 1500000000]);
     await halp._stakeWalletFor(accounts[0]);
     await halp._stakeWalletFor(accounts[1]);
     await halp._stakeWalletFor(accounts[2]);
@@ -256,7 +257,7 @@ contract('HalpCoin', accounts => {
   });
   //TODO: should allow a user to update their vote weight by revoting for the same address
   it('should not allow staked wallets to send or receive funds', async function() {
-    await initializeAccounts.call(this, accounts, [10000, 0]);
+    await initializeAccounts(bank, halp, accounts, [10000, 0]);
     await halp.approve(accounts[0], 100);
     await halp.stakeWallet();
     expect(await getErrorMsg(() => halp.transferFrom(accounts[0], accounts[1], 100))).to.equal("Staked wallets should not be able to transfer tokens");
