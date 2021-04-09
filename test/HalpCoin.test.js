@@ -130,8 +130,6 @@ contract('HalpCoin', accounts => {
 
   });
 
-
-
   it('should calculateYield correctly', async function () {
     const secondsInYear = 31556952;
 

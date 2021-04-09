@@ -80,6 +80,13 @@ module.exports = {
       network_id: 4,
       gasPrice: 10e9,
       skipDryRun: true
+    },
+    kovan: {
+      provider: () => new HDWalletProvider(
+        mnemonic, infuraUrl
+      ),
+      network_id: '42',
+      skipDryRun: true
     }
   },
 

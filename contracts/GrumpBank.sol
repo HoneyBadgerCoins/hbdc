@@ -35,7 +35,7 @@ contract GrumpBank is Ownable, ChainlinkClient {
     jobId = _jobId;
 
     //Fee for chainlink nodes who fail the request
-    fee = 0.1 * 10 ** 18;
+    fee = 1 * 10 ** 18;
 
     deployedTime = block.timestamp;
   }
@@ -63,13 +63,31 @@ contract GrumpBank is Ownable, ChainlinkClient {
   }
 
   //TODO: make this only for for msg.sender;
+  function initializeEscrowAccountFor(address specifiedOracle, bytes32 specifiedJobId, uint256 specifiedFee) public {
+    Chainlink.Request memory req = buildChainlinkRequest(specifiedJobId, address(this), this.fulfill.selector);
+        
+    req.add("get", "https://ipfs.io/ipfs/QmTwmsjzESYyDrvQBBBdY1zMzHViSHUtrn9Y3ZfTmKjqb9");
+
+    req.add("path", addressToString(msg.sender));
+    req.addInt("times", 1);
+    
+    bytes32 reqId = sendChainlinkRequestTo(specifiedOracle, req, specifiedFee);
+    requestFor[reqId] = msg.sender;
+  }
+
+  function testAddressToString(address a) public view returns (string memory) {
+    return addressToString(a);
+  }
+
+  //TODO: make this only for for msg.sender;
   function initializeEscrowAccountFor(address onBehalfOf) public {
     require(authorizedRequesters[onBehalfOf], "MstFrstAuthriz");
     Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
         
-    req.add("get", "https://ipfs.io/ipfs/Qmd72sL7sk7RQ7hkjm2UZ38tpTRC1ZMvGBxFw1U3GWkk8P");
+    req.add("get", "https://ipfs.io/ipfs/QmTwmsjzESYyDrvQBBBdY1zMzHViSHUtrn9Y3ZfTmKjqb9");
 
     req.add("path", addressToString(onBehalfOf));
+    req.addInt("times", 1);
     
     bytes32 reqId = sendChainlinkRequestTo(oracle, req, fee);
     requestFor[reqId] = onBehalfOf;
