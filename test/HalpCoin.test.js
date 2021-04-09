@@ -2,12 +2,7 @@
 // Load dependencies
 const { expect } = require('chai');
 
-const { oracle } = require('@chainlink/test-helpers')
 const { expectRevert, time } = require('@openzeppelin/test-helpers')
-
-const { LinkToken } = require('@chainlink/contracts/truffle/v0.4/LinkToken')
-const { Oracle } = require('@chainlink/contracts/truffle/v0.6/Oracle')
-
  
 async function initializeAccounts(bank, halp, accounts, accountValues) {
   await bank.setAuthorizedContract(halp.address);
@@ -61,73 +56,12 @@ const increaseTime = function(duration) {
  
 contract('HalpCoin', accounts => {
 
-  const jobId = web3.utils.toHex('4c7b7ffb66b344fbaa64995af81e355a')
-  const url =
-    'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD,EUR,JPY'
-
-  const defaultAccount = accounts[0]
-  const oracleNode = accounts[1]
-
-  let link, oc, bank, halp;
+  let bank, halp;
 
   beforeEach(async function () {
-    link = await LinkToken.new({ from: defaultAccount })
-    oc = await Oracle.new(link.address, { from: defaultAccount })
-
     bank = await GrumpBank.new(link.address, oc.address, jobId);
     halp = await HalpCoin.new(bank.address, {initializer: '__HalpCoin_init'});
     await halp.__HalpCoin_init(bank.address);
-
-    await oc.setFulfillmentPermission(oracleNode, true, {
-      from: defaultAccount,
-    })
-  });
-
-  context('with LINK', () => {
-    let request;
-    let tx;
-
-    beforeEach(async () => {
-      await link.transfer(bank.address, web3.utils.toWei('1', 'ether'), {
-        from: defaultAccount,
-      })
-    });
-
-    context('with tx', () => {
-      beforeEach(async () => {
-        await bank.requestAuthorization();
-        tx = await bank.initializeEscrowAccountFor(accounts[0])
-        request = oracle.decodeRunRequest(tx.receipt.rawLogs[3])
-      });
-
-      it('should get a valid request', async () => {
-        assert.equal(oc.address, tx.receipt.rawLogs[3].address)
-        assert.equal(
-          request.topic,
-          web3.utils.keccak256(
-            'OracleRequest(bytes32,address,bytes32,uint256,address,bytes4,uint256,uint256,bytes)',
-          ),
-        )
-      });
-
-      it('should do something', async () => {
-        const expected = 50000
-        const response = web3.utils.padLeft(web3.utils.toHex(expected), 64)
-
-        await oc.fulfillOracleRequest(
-          ...oracle.convertFufillParams(request, response, {
-            from: oracleNode,
-            gas: 500000,
-          }),
-        );
-
-        balance = await bank._testBalance(defaultAccount);
-
-        expect(balance.toString()).to.equal("50000");
-      });
-    });
-
-
   });
 
   it('should calculateYield correctly', async function () {
