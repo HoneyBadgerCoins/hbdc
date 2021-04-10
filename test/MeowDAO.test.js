@@ -172,24 +172,20 @@ contract('MewoDAO', accounts => {
     await initializeAccounts(grumpy, meow, accounts, [10000]);
     await meow.approve(accounts[0], 100);
     await meow.stakeWallet();
-    expect(await getErrorMsg(() => meow.transferFrom(accounts[0], accounts[1], 100))).to.equal("Staked wallets should not be able to transfer tokens");
+    expect(await getErrorMsg(() => meow.transferFrom(accounts[0], accounts[1], 100))).to.equal("StkdWlltCnntTrnsf");
   });
 
   //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
   it("Allows a user to send funds to a staked wallet using sendFundsToStakeWallet", async function (){
     await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
-    //await meow.approve(accounts[0], 500);
+
     await meow._stakeWalletFor(accounts[1]);
     await meow.sendFundsToStakedWallet(accounts[1], 500);
 
     let transfer = await meow.balanceOf(accounts[1]);
-    expect( transfer.toString()).to.equal("1500");
+    expect(transfer.toString()).to.equal("1500");
   });
 
-  
-  //TODO: should apply and unapply a users vote weight correctly,
-  //        and determine the charity wallet accurately with any sequence
-  //TODO: somehow have tests that verify funds go to the right place (??? vague)
   //TODO: handle pausing staked rewards correctly
   //        if a staked wallet ever becomes the charity wallet, it should instantly reify, and then begin its yield term
   //          when it is no longer the charity waller
@@ -198,15 +194,7 @@ contract('MewoDAO', accounts => {
   //        voting
   //        reification
   //        transaction
-  //TODO: it should take a portion of each transaction for the charity wallet
   //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
-  //TODO: should allow a user to requisitionFromBank into a staked wallet but should reify first
   //TODO: ensure the locking mechanism works for unstaking
   //TODO: figure out problem with getting nft value if a staked wallet receives funds
-
-  //TODO: think about failure modes regarding the banking process
-  //        initial filling
-  //        sealing initial deposits
-  //        preventing new contracts from being authorized
-  //        ...?
 });
