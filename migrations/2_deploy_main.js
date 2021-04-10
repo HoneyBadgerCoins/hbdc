@@ -1,6 +1,6 @@
 // migrations/2_deploy_box.js
 
-const HalpCoin = artifacts.require('HalpCoin');
+const MeowDAO = artifacts.require('MeowDAO');
 const Grumpy = artifacts.require('Grumpy');
  
 const { deployProxy } = require('@openzeppelin/truffle-upgrades');
@@ -14,6 +14,5 @@ module.exports = async function (deployer, network, [defaultAccount]) {
   }
 
   await deployer.deploy(Grumpy);
-  //await deployProxy(HalpCoin, [Grumpy.address]);
-  await deployProxy(HalpCoin, [Grumpy.address],  { deployer, initializer: '__HalpCoin_init' });
+  await deployProxy(MeowDAO, [Grumpy.address],  { deployer, initializer: '__MeowDAO_init' });
 };

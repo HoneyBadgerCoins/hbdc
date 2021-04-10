@@ -10,7 +10,7 @@ import "./FixidityLib.sol";
 
 import "./GrumpyCoin.sol";
  
-contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
+contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
   using AddressUpgradeable for address;
 
@@ -21,7 +21,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   address grumpyAddress;
 
-  function __HalpCoin_init(address _grumpyAddress) initializer public {
+  function __MeowDAO_init(address _grumpyAddress) initializer public {
     __Context_init_unchained();
     initialize(_grumpyAddress);
   }
