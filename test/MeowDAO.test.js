@@ -178,9 +178,9 @@ contract('MewoDAO', accounts => {
   //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
   it("Allows a user to send funds to a staked wallet using sendFundsToStakeWallet", async function (){
     await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
-    await meow.approve(accounts[0], 500);
+    //await meow.approve(accounts[0], 500);
     await meow._stakeWalletFor(accounts[1]);
-    await meow.sendFundsToStakedWallet(accounts[0], accounts[1], 500);
+    await meow.sendFundsToStakedWallet(accounts[1], 500);
 
     let transfer = await meow.balanceOf(accounts[1]);
     expect( transfer.toString()).to.equal("1500");
