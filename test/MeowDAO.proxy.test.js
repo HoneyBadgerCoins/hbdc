@@ -29,4 +29,8 @@ contract('MeowDAO (proxy)', function ([defaultAccount]) {
 
   });
 
+  it('Initialized decimals should be 9', async function () {
+    expect((await this.meow.decimals()).toString()).to.equal('9');
+  });
+
 });

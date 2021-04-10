@@ -54,6 +54,7 @@ const increaseTime = function(duration) {
   })
 }
  
+
 contract('MewoDAO', accounts => {
 
   let grumpy, meow;
@@ -165,6 +166,7 @@ contract('MewoDAO', accounts => {
 
     //TODO: test precise balances and also test when an account receives funds while staked and voted
   });
+
   //TODO: should allow a user to update their vote weight by revoting for the same address
   it('should not allow staked wallets to send or receive funds', async function() {
     await initializeAccounts(grumpy, meow, accounts, [10000]);
@@ -172,7 +174,6 @@ contract('MewoDAO', accounts => {
     await meow.stakeWallet();
     expect(await getErrorMsg(() => meow.transferFrom(accounts[0], accounts[1], 100))).to.equal("Staked wallets should not be able to transfer tokens");
   });
-
 
   //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
   it("Allows a user to send funds to a staked wallet using sendFundsToStakeWallet", async function (){
@@ -193,7 +194,6 @@ contract('MewoDAO', accounts => {
   //        if a staked wallet ever becomes the charity wallet, it should instantly reify, and then begin its yield term
   //          when it is no longer the charity waller
   //        it should also work correctly if it stops staking before being unselected as the charity wallet
-  //TODO: should allow a user to unstake without reification using a separate function
   //TODO: handle account(0) as the charity wallet safely
   //        voting
   //        reification

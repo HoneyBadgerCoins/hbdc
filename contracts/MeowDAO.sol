@@ -116,6 +116,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return _stakeWalletFor(_msgSender());
   }
 
+
   function unstakeWallet() public {
     address sender = _msgSender();
 
@@ -132,6 +133,25 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
       }
       reifyYield(sender);
 
+      currentlyStaked[sender] = false;
+    }
+  }
+
+
+  //DONE: should allow a user to unstake without reification using a separate function
+  function unstakeWalletSansReify() public {
+    address sender = _msgSender();
+    require(isStaked(sender));
+
+    if (!stakeCooldownComplete(sender)) {
+      currentlyLocked[sender] = true;
+    }
+
+    else {
+      address vote = currentVotes[sender];
+      if (vote != address(0)) {
+        voteCounts[vote] = voteCounts[vote] - voteWeights[sender]; 
+      }
       currentlyStaked[sender] = false;
     }
   }
