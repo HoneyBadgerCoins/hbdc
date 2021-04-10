@@ -1,16 +1,14 @@
 // contracts/Box.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.7.0;
-pragma abicoder v2;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "./FixidityLib.sol";
 
-import "./GrumpBank.sol";
-
+import "./GrumpyCoin.sol";
  
 contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
@@ -20,14 +18,14 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   string private _name;
   string private _symbol;
 
-  address grumpyBankAddress;
+  address grumpyAddress;
 
-  function __HalpCoin_init(address bankAddress) initializer public {
+  function __HalpCoin_init(address _grumpyAddress) initializer public {
     __Context_init_unchained();
-    initialize(bankAddress);
+    initialize(_grumpyAddress);
   }
 
-  function initialize(address bankAddress) initializer internal{
+  function initialize(address _grumpyAddress) initializer internal{
     _name = 'MeowDAO';
     _symbol = 'Meow';
     _totalSupply = 0;
@@ -35,30 +33,36 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
     //TODO: this needs lots more thinking
     _balances[address(0)] = _totalSupply;
 
-    grumpyBankAddress = bankAddress;
+    grumpyAddress = _grumpyAddress;
+  }
+
+  event GrumpySwap(address wallet, uint256 amount);
+
+  function _swapGrumpyInternal(address user, uint256 amount) private {
+    require(!isStaked(user), "cannot swap into staked wallet");
+
+    Grumpy grumpy = Grumpy(grumpyAddress);
+    
+    grumpy.transferFrom(user, address(0x000000000000000000000000000000000000dEaD), amount);
+
+    _balances[user] += amount;
+
+    _totalSupply += amount;
+
+    emit GrumpySwap(user, amount);
+  }
+
+  function swapGrumpy(uint256 amount) public {
+    _swapGrumpyInternal(msg.sender, amount);
+  }
+
+  //TODO: REMOVE THIS
+  function _swapGrumpyTest(address user, uint256 amount) public {
+    _swapGrumpyInternal(user, amount);
   }
 
   function getBlockTime() public view returns (uint) {
     return block.timestamp;
-  }
-
-  event Withdrawal(address to, uint amount);
-
-  //TODO: this is public for testing, make private
-  function _requisitionFromBankFor(address sender) public returns (uint256) {
-    require(currentlyStaked[sender] == false, "wallet cannot be staked");
-    GrumpBank grumpBank = GrumpBank(grumpyBankAddress);
-
-    uint256 amount = grumpBank.requisitionTokens(sender);
-    _balances[sender] = _balances[sender] + amount;
-    emit Withdrawal(sender, amount);
-
-    _totalSupply += amount; 
-    return amount;
-  }
-
-  function requisitionFromBank() public returns (uint256) {
-    return _requisitionFromBankFor(_msgSender());
   }
 
   mapping (address => uint256) private _balances;
@@ -155,6 +159,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     updateCharityWallet();
   }
+
   function voteForAddress(address charityWallet) public {
     _voteForAddressBy(charityWallet, _msgSender());
   }

@@ -4,15 +4,15 @@ const { expect } = require('chai');
 
 const { expectRevert, time } = require('@openzeppelin/test-helpers')
  
-async function initializeAccounts(bank, halp, accounts, accountValues) {
-  await bank.setAuthorizedContract(halp.address);
-  for (let i = 0; i < accountValues.length; i++) {
-    await bank._testInitAccount(accounts[i], accountValues[i]);
-  }
-  await increaseTime(386401);
+async function initializeAccounts(grumpy, halp, accounts, accountValues) {
+  for (let k = 0; k < accountValues.length; k++) {
+    if (k != 0) {
+      await grumpy.transfer(accounts[k], accountValues[k] * 2);
+    }
 
-  for (let j = 0; j < accountValues.length; j++) {
-    await halp._requisitionFromBankFor(accounts[j]);
+    await grumpy._approve(accounts[k], halp.address, accountValues[k]);
+
+    await halp._swapGrumpyTest(accounts[k], accountValues[k]);
   }
 }
 
@@ -27,7 +27,7 @@ async function getErrorMsg(f) {
 
 // Load compiled artifacts
 const HalpCoin = artifacts.require('HalpCoin');
-const GrumpBank = artifacts.require('GrumpBank');
+const Grumpy = artifacts.require('Grumpy');
 
 const address0 = '0x0000000000000000000000000000000000000000';
 
@@ -56,12 +56,12 @@ const increaseTime = function(duration) {
  
 contract('HalpCoin', accounts => {
 
-  let bank, halp;
+  let grumpy, halp;
 
   beforeEach(async function () {
-    bank = await GrumpBank.new(link.address, oc.address, jobId);
-    halp = await HalpCoin.new(bank.address, {initializer: '__HalpCoin_init'});
-    await halp.__HalpCoin_init(bank.address);
+    grumpy = await Grumpy.new();
+    halp = await HalpCoin.new(grumpy.address, {initializer: '__HalpCoin_init'});
+    await halp.__HalpCoin_init(grumpy.address);
   });
 
   it('should calculateYield correctly', async function () {
@@ -87,33 +87,8 @@ contract('HalpCoin', accounts => {
     assert.equal(ts.toString(), '0', 'total supply isn\'t right');
   });
 
-  //TODO: break this down
-  it('should be able to authenticate with the bank', async function () {
-    await bank.setAuthorizedContract(halp.address);
-    await bank._testInitAccount(accounts[0], 20000000000);
-
-    var fundsAdded = await halp.requisitionFromBank();
-    expect(fundsAdded.logs[0].args[1].toString()).to.equal('10000000000');
-
-    var balanceOf = await halp.balanceOf(accounts[0]);
-    expect(balanceOf.toString()).to.equal('10000000000');
-
-    await increaseTime(1);
-
-    var f3 = await halp.requisitionFromBank();
-    expect(f3.logs[0].args[1].toString()).to.equal('0');
-
-    await increaseTime(86401);
-
-    var f3 = await halp.requisitionFromBank();
-    expect(f3.logs[0].args[1].toString()).to.equal('10000000000');
-
-    var b2 = await halp.balanceOf(accounts[0]);
-    expect(b2.toString()).to.equal('20000000000');
-  });
-
   it('should stake correctly', async function () {
-    await initializeAccounts(bank, halp, accounts, [1000000000]);
+    await initializeAccounts(grumpy, halp, accounts, [1000000000]);
 
     expect(await getErrorMsg(() => halp.reifyYield(accounts[0]))).to.equal('MstBeStkd');
 
@@ -134,13 +109,16 @@ contract('HalpCoin', accounts => {
   });
 
   it('should not allow small users to stake', async function () {
-    await initializeAccounts(bank, halp, accounts, [1000, 100000000000]);
+    await initializeAccounts(grumpy, halp, accounts, [1000, 100000000000]);
+
+    const a = await halp.balanceOf(accounts[0]);
+    const b = await halp.balanceOf(accounts[1]);
 
     expect(await getErrorMsg(() => halp.stakeWallet())).to.equal('InsfcntFnds');
   });
 
   it('should accurately calculate yield with intermediate reifications', async function () {
-    await initializeAccounts(bank, halp, accounts, [1000000000]);
+    await initializeAccounts(grumpy, halp, accounts, [1000000000]);
     await halp.stakeWallet();
     await increaseTime(10000000);
     await halp.reifyYield(accounts[0]);
@@ -156,7 +134,7 @@ contract('HalpCoin', accounts => {
   });
 
   it('should apply and unapply user votes correctly', async function () {
-    await initializeAccounts(bank, halp, accounts, [1000000000, 2000000000, 1500000000]);
+    await initializeAccounts(grumpy, halp, accounts, [1000000000, 2000000000, 1500000000]);
     await halp._stakeWalletFor(accounts[0]);
     await halp._stakeWalletFor(accounts[1]);
     await halp._stakeWalletFor(accounts[2]);
@@ -189,7 +167,7 @@ contract('HalpCoin', accounts => {
   });
   //TODO: should allow a user to update their vote weight by revoting for the same address
   it('should not allow staked wallets to send or receive funds', async function() {
-    await initializeAccounts(bank, halp, accounts, [10000, 0]);
+    await initializeAccounts(grumpy, halp, accounts, [10000]);
     await halp.approve(accounts[0], 100);
     await halp.stakeWallet();
     expect(await getErrorMsg(() => halp.transferFrom(accounts[0], accounts[1], 100))).to.equal("Staked wallets should not be able to transfer tokens");
