@@ -134,6 +134,13 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
     }
   }
 
+  function sendFundsToStakedWallet(address recipient,  address wallet, uint256 amount) public {
+    require(isStaked(wallet), "the wallet must be staked");
+    reifyYield(wallet);
+    _transfer(recipient, wallet, amount); 
+  } 
+
+
   //TODO: make this private
   function _voteForAddressBy(address charityWallet, address sender) public {
 

@@ -172,6 +172,20 @@ contract('HalpCoin', accounts => {
     await halp.stakeWallet();
     expect(await getErrorMsg(() => halp.transferFrom(accounts[0], accounts[1], 100))).to.equal("Staked wallets should not be able to transfer tokens");
   });
+
+
+  //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
+  it("Allows a user to send funds to a staked wallet using sendFundsToStakeWallet", async function (){
+    await initializeAccounts(grumpy, halp, accounts, [10000, 1000]);
+    await halp.approve(accounts[0], 500);
+    await halp._stakeWalletFor(accounts[1]);
+    await halp.sendFundsToStakedWallet(accounts[0], accounts[1], 500);
+
+    let transfer = await halp.balanceOf(accounts[1]);
+    expect( transfer.toString()).to.equal("1500");
+  });
+
+  
   //TODO: should apply and unapply a users vote weight correctly,
   //        and determine the charity wallet accurately with any sequence
   //TODO: somehow have tests that verify funds go to the right place (??? vague)
