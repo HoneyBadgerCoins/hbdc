@@ -17,6 +17,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   uint256 _totalSupply;
   string private _name;
   string private _symbol;
+  uint8 private _decimals;
 
   address grumpyAddress;
 
@@ -28,6 +29,7 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
   function initialize(address _grumpyAddress) initializer internal{
     _name = 'MeowDAO';
     _symbol = 'Meow';
+    _decimals = 9; //placeholder for now.
     _totalSupply = 0;
     
     //TODO: this needs lots more thinking
@@ -273,6 +275,10 @@ contract HalpCoin is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   function symbol() external view returns (string memory) {
     return _symbol;
+  }
+
+  function decimals() external view returns (uint8) {
+    return _decimals;
   }
 
   //overriding the erc20 spec
