@@ -99,7 +99,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function stakeCooldownComplete(address wallet) private view returns (bool) {
-    return block.timestamp - periodStart[wallet] > 86400;
+    return block.timestamp - periodStart[wallet] > 432000;
   }
 
   //TODO: make private, is public for testing
