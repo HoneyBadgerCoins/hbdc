@@ -189,6 +189,15 @@ contract('MewoDAO', accounts => {
     expect(transfer.toString()).to.equal("1500");
   });
 
+  //TODO: ensure the locking mechanism works for unstaking
+  it("locking should work with unstaking", async function (){
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    await meow._stakeWalletFor(accounts[1]);
+    await meow._unstakeWalletFor(accounts[1]);
+    let val = await meow.currentlyLocked(accounts[1]);    
+    expect(val.toString()).to.equal("true");
+  });
+
   context('Pausing Staking', async function () {
     beforeEach(async function() {
       await initializeAccounts(grumpy, meow, accounts, [100000, 100000, 100000]);
@@ -289,5 +298,4 @@ contract('MewoDAO', accounts => {
   //        voting
   //        reification
   //        transaction
-  //TODO: ensure the locking mechanism works for unstaking
 });
