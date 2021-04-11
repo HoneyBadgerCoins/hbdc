@@ -113,7 +113,20 @@ contract('MeowDAO', accounts => {
     );
   });
 
+  it('should give 0% transaction rate after year of the contract being made', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+
+    await increaseTime(7551000);
+    const rate = (await meow.getTransactionRate());
+    //console.dir(rate);
+    console.log(rate.toString());
+    //const name  = await meow.name();
+    //expect(name).to.equal('0');
+    expect((await meow.getTransactionRate()).toString()).to.equal('100');
+  });
+
   it('should not allow small users to stake', async function () {
+
     await initializeAccounts(grumpy, meow, accounts, [1000, 100000000000]);
 
     const a = await meow.balanceOf(accounts[0]);

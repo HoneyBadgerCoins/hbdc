@@ -33,4 +33,14 @@ contract('MeowDAO (proxy)', function ([defaultAccount]) {
     expect((await this.meow.decimals()).toString()).to.equal('9');
   });
 
+  
+  it('contract start time should be initialized properly', async function () {
+    const blocktime = await this.meow.getBlockTime();
+    const startTime = await this.meow.contractStart();
+    // console.log(blocktime.toString());
+    // console.log(startTime.toString());
+    expect((blocktime).toString()).to.equal(startTime.toString());
+  });
+
+
 });

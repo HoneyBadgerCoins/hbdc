@@ -18,6 +18,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   string private _name;
   string private _symbol;
   uint8 private _decimals;
+  uint private _contractStart;
 
   address grumpyAddress;
 
@@ -31,6 +32,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _symbol = 'Meow';
     _decimals = 9; //placeholder for now.
     _totalSupply = 0;
+    _contractStart = block.timestamp;
     
     //TODO: this needs lots more thinking
     _balances[address(0)] = _totalSupply;
@@ -277,6 +279,29 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return block.timestamp - periodStart[wallet];
   }
 
+  //TODO: public for now need to be private on release
+  //1 for 4 months
+  //0.75 for
+  //0.5 
+  //0.2
+  //0
+  
+  function getTransactionRate() public view returns (uint256){
+    uint period = block.timestamp - _contractStart;
+    //return period;
+    if(period <= 7884000) {
+      return 100;
+    } else if (period <= 15768000) {
+      return 75;
+    } else if (period <= 23652000) {
+      return 50;
+    } else if (period <= 31536000) {
+      return 25;
+    } else {
+      return 0;
+    }
+  } 
+
   function reifyYield(address wallet) public {
     if (currentCharityWallet == wallet) return;
     require(isStaked(wallet), 'MstBeStkd');
@@ -303,16 +328,20 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return _balances[wallet] > _totalSupply/1000;
   }
 
-  function name() external view returns (string memory) {
+  function name() public view returns (string memory) {
     return _name;
   } 
 
-  function symbol() external view returns (string memory) {
+  function symbol() public view returns (string memory) {
     return _symbol;
   }
 
-  function decimals() external view returns (uint8) {
+  function decimals() public view returns (uint8) {
     return _decimals;
+  }
+
+  function contractStart() public view returns (uint) {
+    return _contractStart;
   }
 
   //overriding the erc20 spec
