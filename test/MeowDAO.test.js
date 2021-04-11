@@ -179,7 +179,6 @@ contract('MewoDAO', accounts => {
     expect(await getErrorMsg(() => meow.transferFrom(accounts[0], accounts[1], 100))).to.equal("StkdWlltCnntTrnsf");
   });
 
-  //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
   it("Allows a user to send funds to a staked wallet using sendFundsToStakeWallet", async function (){
     await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
 
@@ -290,7 +289,5 @@ contract('MewoDAO', accounts => {
   //        voting
   //        reification
   //        transaction
-  //TODO: should allow a user to send funds to a staked wallet using sendFundsToStakedWallet
   //TODO: ensure the locking mechanism works for unstaking
-  //TODO: figure out problem with getting nft value if a staked wallet receives funds
 });

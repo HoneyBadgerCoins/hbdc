@@ -70,9 +70,11 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   mapping (address => uint256) private _balances;
   mapping (address => mapping (address => uint256)) private _allowances;
 
-  //TODO: track stateStart independently of the way currently stakeTimes is used.
-  //      stakeStart should not be updated until unstaking, and could be used for nft minting
-  mapping (address => uint) public stakeTimes;
+  //these track the original staking state for planned yielding rewards
+  mapping (address => uint) public stakeStart;
+  mapping (address => uint) public originalStakeBalance;
+
+  mapping (address => uint) public periodStart;
   mapping (address => bool) currentlyStaked;
   mapping (address => bool) currentlyLocked;
   mapping (address => address) currentVotes;
@@ -97,7 +99,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function stakeCooldownComplete(address wallet) private view returns (bool) {
-    return block.timestamp - stakeTimes[wallet] > 86400;
+    return block.timestamp - periodStart[wallet] > 86400;
   }
 
   //TODO: make private, is public for testing
@@ -108,7 +110,10 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     currentlyStaked[sender] = true;
     currentlyLocked[sender] = false;
     currentVotes[sender] = address(0);
-    stakeTimes[sender] = block.timestamp;
+    periodStart[sender] = block.timestamp;
+
+    stakeStart[sender] = block.timestamp;
+    originalStakeBalance[sender] = _balances[sender];
 
     return true;
   }
@@ -224,7 +229,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     //old winner was staked
     if (currentCharityWallet != address(0) && currentlyStaked[currentCharityWallet]) {
       //reset their yield period start to the present
-      stakeTimes[currentCharityWallet] = block.timestamp;
+      periodStart[currentCharityWallet] = block.timestamp;
     }
 
     currentCharityWallet = winner;
@@ -264,7 +269,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function getCompoundingFactor(address wallet) public view returns (uint) {
-    return block.timestamp - stakeTimes[wallet];
+    return block.timestamp - periodStart[wallet];
   }
 
   function reifyYield(address wallet) public {
@@ -280,7 +285,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     _totalSupply = _totalSupply + (yield * 2);
 
-    stakeTimes[wallet] = block.timestamp;
+    periodStart[wallet] = block.timestamp;
 
     _balances[wallet] = _balances[wallet] +  yield;
     _balances[currentCharityWallet] = _balances[currentCharityWallet] + yield;
