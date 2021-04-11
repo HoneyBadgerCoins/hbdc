@@ -123,7 +123,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
    //TODO: change this to private on release
-  function _unstakeWalletFor(address sender) (bool) {
+  function _unstakeWalletFor(address sender) public {
 
     if (!stakeCooldownComplete(sender)) {
       currentlyLocked[sender] = true;
