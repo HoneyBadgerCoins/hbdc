@@ -130,6 +130,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
       address vote = currentVotes[sender];
       if (vote != address(0)) {
         voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
+        updateCharityWallet();
       }
       reifyYield(sender);
 
@@ -192,6 +193,8 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _voteForAddressBy(charityWallet, _msgSender());
   }
 
+  event NewCharityWallet(address oldW, address newW);
+
   function updateCharityWallet() public {
     uint256 maxVoteValue = 0; 
     address winner = address(0);
@@ -210,16 +213,21 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     if (currentCharityWallet == winner) return;
 
-    if (currentCharityWallet != address(0) && currentlyStaked[currentCharityWallet]) {
-      stakeTimes[currentCharityWallet] = block.timestamp;
-    }
+    emit NewCharityWallet(currentCharityWallet, winner);
 
+    //new winner is staked
     if (winner != address(0) && currentlyStaked[winner]) {
+      //reify the new wallet before they become the currentCharityWallet
       reifyYield(winner);
     }
 
-    currentCharityWallet = winner;
+    //old winner was staked
+    if (currentCharityWallet != address(0) && currentlyStaked[currentCharityWallet]) {
+      //reset their yield period start to the present
+      stakeTimes[currentCharityWallet] = block.timestamp;
+    }
 
+    currentCharityWallet = winner;
   }
 
   //  removeVote must call recalculateCharityWallet, but addVote doesn't have to
@@ -268,16 +276,13 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     if (compoundingFactor < 7200) return;
 
-    emit Trace2(_balances[wallet], compoundingFactor);
     uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
-    emit Trace(yield);
 
     _totalSupply = _totalSupply + (yield * 2);
 
     stakeTimes[wallet] = block.timestamp;
 
     _balances[wallet] = _balances[wallet] +  yield;
-    emit Trace(yield);
     _balances[currentCharityWallet] = _balances[currentCharityWallet] + yield;
   }
 

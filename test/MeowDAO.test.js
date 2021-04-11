@@ -25,6 +25,10 @@ async function getErrorMsg(f) {
   return received;
 }
 
+function priceRange(a, b) {
+  return s => s >= a && s <= b;
+}
+
 // Load compiled artifacts
 const MeowDAO = artifacts.require('MeowDAO');
 const Grumpy = artifacts.require('Grumpy');
@@ -186,10 +190,102 @@ contract('MewoDAO', accounts => {
     expect(transfer.toString()).to.equal("1500");
   });
 
-  //TODO: handle pausing staked rewards correctly
-  //        if a staked wallet ever becomes the charity wallet, it should instantly reify, and then begin its yield term
-  //          when it is no longer the charity waller
-  //        it should also work correctly if it stops staking before being unselected as the charity wallet
+  context('Pausing Staking', async function () {
+    beforeEach(async function() {
+      await initializeAccounts(grumpy, meow, accounts, [100000, 100000, 100000]);
+      await meow._stakeWalletFor(accounts[0]);
+      await meow._stakeWalletFor(accounts[1]);
+      await meow._stakeWalletFor(accounts[2]);
+      await increaseTime(31556952);
+    });
+
+    context("staked wallet becomes charityWallet by other vote and it unstakes after a year", async function () {
+      beforeEach(async function() {
+        await meow._voteForAddressBy(accounts[0], accounts[1]);
+        await increaseTime(31556952);
+        await meow.unstakeWallet();
+      });
+      it('should not get any more yield', async function () {
+        await meow.reifyYield(accounts[0]);
+        const b = await meow.balanceOf(accounts[0]);
+        expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+      });
+    });
+    context("staked wallet becomes charityWallet by own vote", async function () {
+      beforeEach(async function() {
+        await meow._voteForAddressBy(accounts[0], accounts[0]);
+      });
+
+      it("should reify the staked wallet which has been voted upon", async function () {
+        const b = await meow.balanceOf(accounts[0]);
+        expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+      });
+
+      context("1 year passes", function () {
+        beforeEach(async function() {
+          await increaseTime(31556952);
+        });
+        it('should not get any more yield', async function () {
+          await meow.reifyYield(accounts[0]);
+          const b = await meow.balanceOf(accounts[0]);
+          expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+        });
+        context("it loses the vote", function () {
+          beforeEach(async function() {
+            await meow._voteForAddressBy(address0, accounts[0]);
+          });
+          it('should not get any more yield', async function () {
+            await meow.reifyYield(accounts[0]);
+            const b = await meow.balanceOf(accounts[0]);
+            expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+          });
+          it('should reset currentCharityWallet to address0', async function () {
+            const w = await meow.getCharityWallet();
+            expect(w).to.equal(address0);
+          });
+        });
+        context("it unstakes", function () {
+          beforeEach(async function() {
+            await meow.unstakeWallet();
+          });
+          it('should not get any more yield', async function () {
+            const b = await meow.balanceOf(accounts[0]);
+            expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+          });
+          it('should reset currentCharityWallet to address0', async function () {
+            const w = await meow.getCharityWallet();
+            expect(w).to.equal(address0);
+          });
+        });
+      });
+
+      context('staked charityWallet receives more votes', async function () {
+        beforeEach(async function() {
+          await meow._voteForAddressBy(accounts[0], accounts[1]);
+          await meow._voteForAddressBy(accounts[0], accounts[2]);
+        });
+
+        it("should not have any effect", async function () {
+          const b = await meow.balanceOf(accounts[0]);
+          expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+        });
+
+        context('staked charityWallet loses the vote', async function () {
+          beforeEach(async function() {
+            await meow._voteForAddressBy(accounts[1], accounts[0]);
+            await meow._voteForAddressBy(accounts[1], accounts[2]);
+          });
+
+          it("should receives the yield from the deciding vote", async function () {
+            const b = await meow.balanceOf(accounts[0]);
+            expect(b.toString()).to.satisfy(priceRange('113998', '114009'));
+          });
+        });
+      });
+    });
+
+  });
+
   //TODO: handle account(0) as the charity wallet safely
   //        voting
   //        reification
