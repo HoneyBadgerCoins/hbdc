@@ -59,7 +59,7 @@ const increaseTime = function(duration) {
 }
  
 
-contract('MewoDAO', accounts => {
+contract('MeowDAO', accounts => {
 
   let grumpy, meow;
 

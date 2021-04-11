@@ -130,12 +130,13 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     }
 
     else {
+      reifyYield(sender);
+
       address vote = currentVotes[sender];
       if (vote != address(0)) {
         voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
         updateCharityWallet();
       }
-      reifyYield(sender);
 
       currentlyStaked[sender] = false;
     }
@@ -224,16 +225,16 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     emit NewCharityWallet(currentCharityWallet, winner);
 
-    //new winner is staked
-    if (winner != address(0) && currentlyStaked[winner]) {
-      //reify the new wallet before they become the currentCharityWallet
-      reifyYield(winner);
-    }
-
     //old winner was staked
     if (currentCharityWallet != address(0) && currentlyStaked[currentCharityWallet]) {
       //reset their yield period start to the present
       periodStart[currentCharityWallet] = block.timestamp;
+    }
+
+    //new winner is staked
+    if (winner != address(0) && currentlyStaked[winner]) {
+      //reify the new wallet before they become the currentCharityWallet
+      reifyYield(winner);
     }
 
     currentCharityWallet = winner;
