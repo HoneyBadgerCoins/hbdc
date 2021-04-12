@@ -141,7 +141,7 @@ contract('MeowDAO', accounts => {
     expect((await meow.getTransactionFee(100000)).toString()).to.equal('250');
   });
 
-  it('Tx fee shold be 0 after 12 month for 100000', async function () {
+  it('Tx fee should be 0 after 12 month for 100000', async function () {
     await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
     const aftermonth12 = 31537000;
     await increaseTime(aftermonth12);

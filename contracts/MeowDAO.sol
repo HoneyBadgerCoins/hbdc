@@ -91,7 +91,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   //TODO: needs initialization
   address currentCharityWallet;
 
-  function getCharityWallet() external view returns (address) {
+  function getCharityWallet() public view returns (address) {
     return currentCharityWallet;
   }
 
@@ -282,6 +282,8 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   //TODO: public for now need to be private on release
+  //TODO: underflow and overflow
+  //TODO: do some bounds testing
   function getTransactionFee(uint256 txAmt) public view returns (uint256){
     uint period = block.timestamp - _contractStart;
     uint256 month3 = 7884000;
@@ -296,7 +298,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     } else if (period <= month9) {
       return (txAmt/10000) * 50;  //0.0050
     } else if (period <= month12) {
-      return (txAmt/10000) * 25;   //0.0025
+      return (txAmt/10000) * 25;  //0.0025
     } else {
       return 0;
     }
@@ -328,19 +330,19 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return _balances[wallet] > _totalSupply/1000;
   }
 
-  function name() public view returns (string memory) {
+  function name() external view returns (string memory) {
     return _name;
   } 
 
-  function symbol() public view returns (string memory) {
+  function symbol() external view returns (string memory) {
     return _symbol;
   }
 
-  function decimals() public view returns (uint8) {
+  function decimals() external view returns (uint8) {
     return _decimals;
   }
 
-  function contractStart() public view returns (uint) {
+  function contractStart() external view returns (uint) {
     return _contractStart;
   }
 
@@ -368,10 +370,16 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     //_beforeTokenTransfer(sender, recipient, amount); seems like a hook that will be overriden, in the future.
 
+    uint256 txFee = getTransactionFee(amount);
+
     uint256 senderBalance = _balances[sender];
     require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
     _balances[sender] = senderBalance - amount;
-    _balances[recipient] += amount;
+    _balances[recipient] += amount - txFee;
+
+    //sent money to charity Wallet
+    address charityWallet = getCharityWallet();
+    //do another transfer?? maybe this shouldn't be in the transfer function.
 
     emit Transfer(sender, recipient, amount);
   }
