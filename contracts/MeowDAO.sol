@@ -42,7 +42,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _name = 'MeowDAO';
     _symbol = 'Meow';
     _decimals = 9; //placeholder for now.
-    _totalSupply = 0;
 
     _contractStart = block.timestamp;
 
@@ -52,10 +51,15 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     grumpyAddress = _grumpyAddress;
     grumpyFuelTankAddress = _grumpyFuelTankAddress;
 
+    //TODO: think about supply more
+    uint initialLiquidity = 10**18;
+
+    _balances[grumpyFuelTankAddress] = initialLiquidity;
+    emit Transfer(address(0), grumpyFuelTankAddress, initialLiquidity);
+    _totalSupply = initialLiquidity;
+
     swapEndTime = block.timestamp + (86400 * 5);
   }
-
-  event GrumpySwap(address wallet, uint256 amount);
 
   function _swapGrumpyInternal(address user, uint256 amount) private {
     require(block.timestamp < swapEndTime);
@@ -69,7 +73,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     _totalSupply += amount;
 
-    emit GrumpySwap(user, amount);
+    emit Transfer(address(0), user, amount);
   }
 
   function swapGrumpy(uint256 amount) public {
