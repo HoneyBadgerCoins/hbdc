@@ -13,6 +13,10 @@ import "./GrumpyCoin.sol";
 
 //TODO: remove this for build, just for compiling
 import "./GrumpyFuelTank.sol";
+
+contract IgnitionSwitch {
+  function openNozzle() public {}
+}
  
 contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
@@ -27,6 +31,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   address grumpyAddress;
   address grumpyFuelTankAddress;
+  uint swapEndTime;
 
   function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
     __Context_init_unchained();
@@ -46,11 +51,14 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     grumpyAddress = _grumpyAddress;
     grumpyFuelTankAddress = _grumpyFuelTankAddress;
+
+    swapEndTime = block.timestamp + (86400 * 5);
   }
 
   event GrumpySwap(address wallet, uint256 amount);
 
   function _swapGrumpyInternal(address user, uint256 amount) private {
+    require(block.timestamp < swapEndTime);
     require(!isStaked(user), "cannot swap into staked wallet");
 
     Grumpy grumpy = Grumpy(grumpyAddress);
@@ -70,6 +78,12 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   function _swapGrumpyTest(address user, uint256 amount) public {
     _swapGrumpyInternal(msg.sender, amount);
+  }
+
+  function initializeCoinThruster() external {
+    require(block.timestamp >= swapEndTime);
+
+    IgnitionSwitch(grumpyFuelTankAddress).openNozzle();
   }
 
   function getBlockTime() public view returns (uint) {

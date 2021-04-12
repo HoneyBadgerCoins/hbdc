@@ -3,10 +3,11 @@ pragma solidity ^0.8.0;
 import "./GrumpyCoin.sol";
 import "./interfaces/IUniswapV2Router02.sol";
 import "./Ownable.sol";
+import "./Context.sol";
 import "./interfaces/IERC20.sol";
 
 
-contract GrumpyFuelTank is Ownable {
+contract GrumpyFuelTank is Context, Ownable {
   IUniswapV2Router02 uniswapRouter;
 
   address uniswapRouterAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
@@ -18,36 +19,54 @@ contract GrumpyFuelTank is Ownable {
     uniswapRouter = IUniswapV2Router02(uniswapRouterAddress);
   }
 
-  fallback () external payable {}
-
   function addMeowDAOaddress(address _meowDAOAddress) public onlyOwner {
     require(meowDAOAddress == address(0));
     meowDAOAddress = _meowDAOAddress;
   }
 
+  bool nozzleOpen = false;
+  function openNozzle() public {
+    require(meowDAOAddress != address(0));
+    require(_msgSender() == meowDAOAddress);
+    nozzleOpen = true;
+  }
+
   //TODO: pass deadline
   function sellGrumpy(uint256 amount, uint256 amountOutMin) public onlyOwner {
+    require(nozzleOpen);
     IERC20 grumpy = IERC20(grumpyAddress);
     require(grumpy.approve(uniswapRouterAddress, amount), "Could not approve grumpy transfer");
 
     address[] memory path = new address[](2);
     path[0] = grumpyAddress;
     path[1] = uniswapRouter.WETH();
-    uniswapRouter.swapExactTokensForETH(amount, amountOutMin, path, address(this), block.timestamp);
+    uniswapRouter.swapExactTokensForTokens(amount, amountOutMin, path, address(this), block.timestamp);
   }
 
   //must first add allowance to router of amountTokenDesired
-  function provideLockedLiquidity(uint amountTokenDesired, uint amountTokenMin, uint amountETHMin, uint deadline) public onlyOwner {
+  function provideLockedLiquidity(
+        uint amountWETHDesired, uint amountMEOWDesired,
+        uint amountWETHMin, uint amountMEOWMin,
+        uint deadline) public onlyOwner {
+
+    require(nozzleOpen);
     require(meowDAOAddress != address(0));
 
-    IERC20 meow = IERC20(meowDAOAddress);
-    require(meow.approve(uniswapRouterAddress, amountTokenDesired), "Could not approve meow transfer");
+    address wethAddress = uniswapRouter.WETH();
 
-    uniswapRouter.addLiquidityETH(
-      address(meowDAOAddress),
-      amountTokenDesired,
-      amountTokenMin,
-      amountETHMin,
+    require(IERC20(wethAddress).approve(uniswapRouterAddress, amountWETHDesired),
+      "Could not approve WETH transfer");
+
+    require(IERC20(meowDAOAddress).approve(uniswapRouterAddress, amountMEOWDesired),
+      "Could not approve MEOW transfer");
+
+    uniswapRouter.addLiquidity(
+      uniswapRouter.WETH(),
+      meowDAOAddress,
+      amountWETHDesired,
+      amountMEOWDesired,
+      amountWETHMin,
+      amountMEOWMin,
       address(0x000000000000000000000000000000000000dEaD),
       deadline); 
   }
