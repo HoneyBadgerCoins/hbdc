@@ -113,16 +113,39 @@ contract('MeowDAO', accounts => {
     );
   });
 
-  it('should give 0% transaction rate after year of the contract being made', async function () {
+  it('Tx fee should be 1000 after 2months for 100000', async function () {
     await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const month2= 5184000 
+    await increaseTime(month2);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('1000');
+  });
 
-    await increaseTime(7551000);
-    const rate = (await meow.getTransactionRate());
-    //console.dir(rate);
-    console.log(rate.toString());
-    //const name  = await meow.name();
-    //expect(name).to.equal('0');
-    expect((await meow.getTransactionRate()).toString()).to.equal('100');
+  it('Tx fee should be 750 after 5 months for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const month5 = 12960000;
+    await increaseTime(month5);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('750'); 
+  });
+
+  it('Tx fee should be 500 after 8 months for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const month8 = 20736000;
+    await increaseTime(month8);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('500');
+  });
+
+  it('Tx fee should be 250 after 10 month for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const month10 = 25920000;
+    await increaseTime(month10);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('250');
+  });
+
+  it('Tx fee shold be 0 after 12 month for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const aftermonth12 = 31537000;
+    await increaseTime(aftermonth12);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('0');
   });
 
   it('should not allow small users to stake', async function () {

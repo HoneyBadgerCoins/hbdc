@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./FixidityLib.sol";
 
 import "./GrumpyCoin.sol";
@@ -13,6 +14,7 @@ import "./GrumpyCoin.sol";
 contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
   using AddressUpgradeable for address;
+  using SafeMath for uint256;
 
   uint256 _totalSupply;
   string private _name;
@@ -280,23 +282,21 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   //TODO: public for now need to be private on release
-  //1 for 4 months
-  //0.75 for
-  //0.5 
-  //0.2
-  //0
-  
-  function getTransactionRate() public view returns (uint256){
+  function getTransactionFee(uint256 txAmt) public view returns (uint256){
     uint period = block.timestamp - _contractStart;
-    //return period;
-    if(period <= 7884000) {
-      return 100;
-    } else if (period <= 15768000) {
-      return 75;
-    } else if (period <= 23652000) {
-      return 50;
-    } else if (period <= 31536000) {
-      return 25;
+    uint256 month3 = 7884000;
+    uint256 month6 = 15768000;
+    uint256 month9 = 23652000;
+    uint256 month12= 31536000;
+
+    if(period <= month3) {
+      return (txAmt/10000) * 100; //0.01
+    } else if (period <= month6) {
+      return (txAmt/10000) * 75;  //0.0075
+    } else if (period <= month9) {
+      return (txAmt/10000) * 50;  //0.0050
+    } else if (period <= month12) {
+      return (txAmt/10000) * 25;   //0.0025
     } else {
       return 0;
     }
