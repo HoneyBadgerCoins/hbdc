@@ -10,6 +10,9 @@ import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./FixidityLib.sol";
 
 import "./GrumpyCoin.sol";
+
+//TODO: remove this for build, just for compiling
+import "./GrumpyFuelTank.sol";
  
 contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
@@ -23,23 +26,26 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   uint private _contractStart;
 
   address grumpyAddress;
+  address grumpyFuelTankAddress;
 
-  function __MeowDAO_init(address _grumpyAddress) initializer public {
+  function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
     __Context_init_unchained();
-    initialize(_grumpyAddress);
+    initialize(_grumpyAddress, _grumpyFuelTankAddress);
   }
 
-  function initialize(address _grumpyAddress) initializer internal{
+  function initialize(address _grumpyAddress, address _grumpyFuelTankAddress) initializer internal{
     _name = 'MeowDAO';
     _symbol = 'Meow';
     _decimals = 9; //placeholder for now.
     _totalSupply = 0;
+
     _contractStart = block.timestamp;
-    
+
     //TODO: this needs lots more thinking
     _balances[address(0)] = _totalSupply;
 
     grumpyAddress = _grumpyAddress;
+    grumpyFuelTankAddress = _grumpyFuelTankAddress;
   }
 
   event GrumpySwap(address wallet, uint256 amount);
@@ -49,7 +55,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     Grumpy grumpy = Grumpy(grumpyAddress);
     
-    grumpy.transferFrom(user, address(0x000000000000000000000000000000000000dEaD), amount);
+    grumpy.transferFrom(user, grumpyFuelTankAddress, amount);
 
     _balances[user] += amount;
 
@@ -62,9 +68,8 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _swapGrumpyInternal(msg.sender, amount);
   }
 
-  //TODO: REMOVE THIS
   function _swapGrumpyTest(address user, uint256 amount) public {
-    _swapGrumpyInternal(user, amount);
+    _swapGrumpyInternal(msg.sender, amount);
   }
 
   function getBlockTime() public view returns (uint) {
@@ -389,7 +394,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   function approve(address spender, uint256 amount) public override returns (bool) {
     _approve(_msgSender(), spender, amount); //_msgSender()
     return true;
-
   }
 
   function _approve(address owner, address spender, uint256 amount) internal virtual {
