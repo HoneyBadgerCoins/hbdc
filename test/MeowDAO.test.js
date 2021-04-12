@@ -5,11 +5,13 @@ const { expect } = require('chai');
 const { expectRevert, time } = require('@openzeppelin/test-helpers')
  
 async function initializeAccounts(grumpy, meow, accounts, accountValues) {
+
   for (let k = 0; k < accountValues.length; k++) {
     if (k != 0) {
       await grumpy.transfer(accounts[k], accountValues[k] * 2);
     }
 
+    //console.log(accounts[k], meow.address, accountValues[k]);
     await grumpy._approve(accounts[k], meow.address, accountValues[k]);
 
     await meow._swapGrumpyTest(accounts[k], accountValues[k]);
@@ -32,6 +34,7 @@ function priceRange(a, b) {
 // Load compiled artifacts
 const MeowDAO = artifacts.require('MeowDAO');
 const Grumpy = artifacts.require('Grumpy');
+const FuelTank = artifacts.require('GrumpyFuelTank');
 
 const address0 = '0x0000000000000000000000000000000000000000';
 
@@ -61,12 +64,14 @@ const increaseTime = function(duration) {
 
 contract('MeowDAO', accounts => {
 
-  let grumpy, meow;
+  let grumpy, fuelTank, meow;
 
   beforeEach(async function () {
     grumpy = await Grumpy.new();
-    meow = await MeowDAO.new(grumpy.address, {initializer: '__MeowDAO_init'});
-    await meow.__MeowDAO_init(grumpy.address);
+    fuelTank = await FuelTank.new(grumpy.address);
+
+    meow = await MeowDAO.new(grumpy.address, fuelTank.address, {initializer: '__MeowDAO_init'});
+    await meow.__MeowDAO_init(grumpy.address, fuelTank.address);
   });
 
   it('should calculateYield correctly', async function () {
@@ -89,7 +94,17 @@ contract('MeowDAO', accounts => {
   it('should initialize supply by default', async function () {
     var ts = await meow.totalSupply();
 
-    assert.equal(ts.toString(), '0', 'total supply isn\'t right');
+    assert.equal(ts.toString(), '1000000000000000000', 'total supply isn\'t right');
+  });
+
+  it('should initializeAccounts correctly', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [1000000000, 2000000000]);
+
+    const b1 = await meow.balanceOf(accounts[0]);
+    const b2 = await meow.balanceOf(accounts[1]);
+
+    expect(b1.toString()).to.equal('1000000000');
+    expect(b2.toString()).to.equal('2000000000');
   });
 
   it('should stake correctly', async function () {
@@ -209,25 +224,25 @@ contract('MeowDAO', accounts => {
 
   //TODO: should allow a user to update their vote weight by revoting for the same address
   it('should not allow staked wallets to send or receive funds', async function() {
-    await initializeAccounts(grumpy, meow, accounts, [10000]);
-    await meow.approve(accounts[0], 100);
+    await initializeAccounts(grumpy, meow, accounts, [1000000000]);
+    await meow.approve(accounts[0], 10000000);
     await meow.stakeWallet();
-    expect(await getErrorMsg(() => meow.transferFrom(accounts[0], accounts[1], 100))).to.equal("StkdWlltCnntTrnsf");
+    expect(await getErrorMsg(() => meow.transferFrom(accounts[0], accounts[1], 10000000))).to.equal("StkdWlltCnntTrnsf");
   });
 
   it("Allows a user to send funds to a staked wallet using sendFundsToStakeWallet", async function (){
-    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    await initializeAccounts(grumpy, meow, accounts, [1000000000000, 100000000000]);
 
     await meow._stakeWalletFor(accounts[1]);
-    await meow.sendFundsToStakedWallet(accounts[1], 500);
+    await meow.sendFundsToStakedWallet(accounts[1], 50000000000);
 
     let transfer = await meow.balanceOf(accounts[1]);
-    expect(transfer.toString()).to.equal("1500");
+    expect(transfer.toString()).to.equal("150000000000");
   });
 
   //TODO: ensure the locking mechanism works for unstaking
   it("locking should work with unstaking", async function (){
-    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    await initializeAccounts(grumpy, meow, accounts, [100000000000, 10000000000]);
     await meow._stakeWalletFor(accounts[1]);
     await meow._unstakeWalletFor(accounts[1]);
     let val = await meow.currentlyLocked(accounts[1]);    
@@ -236,7 +251,7 @@ contract('MeowDAO', accounts => {
 
   context('Pausing Staking', async function () {
     beforeEach(async function() {
-      await initializeAccounts(grumpy, meow, accounts, [100000, 100000, 100000]);
+      await initializeAccounts(grumpy, meow, accounts, [10000000000, 10000000000, 10000000000]);
       await meow._stakeWalletFor(accounts[0]);
       await meow._stakeWalletFor(accounts[1]);
       await meow._stakeWalletFor(accounts[2]);
@@ -252,7 +267,7 @@ contract('MeowDAO', accounts => {
       it('should not get any more yield', async function () {
         await meow.reifyYield(accounts[0]);
         const b = await meow.balanceOf(accounts[0]);
-        expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+        expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
       });
     });
 
@@ -263,7 +278,7 @@ contract('MeowDAO', accounts => {
 
       it("should reify the staked wallet which has been voted upon", async function () {
         const b = await meow.balanceOf(accounts[0]);
-        expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+        expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
       });
 
       context("1 year passes after staked wallet becomes charity wallet", function () {
@@ -273,7 +288,7 @@ contract('MeowDAO', accounts => {
         it('should not get any more yield after becoming charity wallet', async function () {
           await meow.reifyYield(accounts[0]);
           const b = await meow.balanceOf(accounts[0]);
-          expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+          expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
         });
         context("it loses the vote", function () {
           beforeEach(async function() {
@@ -282,7 +297,7 @@ contract('MeowDAO', accounts => {
           it('should not get any more yield', async function () {
             await meow.reifyYield(accounts[0]);
             const b = await meow.balanceOf(accounts[0]);
-            expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+            expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
           });
           it('should reset currentCharityWallet to address0', async function () {
             const w = await meow.getCharityWallet();
@@ -295,7 +310,7 @@ contract('MeowDAO', accounts => {
           });
           it('should not get any more yield', async function () {
             const b = await meow.balanceOf(accounts[0]);
-            expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+            expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
           });
           it('should reset currentCharityWallet to address0', async function () {
             const w = await meow.getCharityWallet();
@@ -312,7 +327,7 @@ contract('MeowDAO', accounts => {
 
         it("should not have any effect", async function () {
           const b = await meow.balanceOf(accounts[0]);
-          expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
+          expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
         });
 
         context('staked charityWallet loses the vote', async function () {
@@ -323,7 +338,7 @@ contract('MeowDAO', accounts => {
 
           it("should receives the yield from the deciding vote", async function () {
             const b = await meow.balanceOf(accounts[0]);
-            expect(b.toString()).to.satisfy(priceRange('113998', '114009'));
+            expect(b.toString()).to.satisfy(priceRange('11399800000', '11400900000'));
           });
         });
       });

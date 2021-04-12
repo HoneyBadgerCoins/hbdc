@@ -81,7 +81,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function _swapGrumpyTest(address user, uint256 amount) public {
-    _swapGrumpyInternal(msg.sender, amount);
+    _swapGrumpyInternal(user, amount);
   }
 
   function initializeCoinThruster() external {
@@ -348,7 +348,8 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   event Trace(uint n);
 
   function _canStake(address wallet) private view returns (bool) {
-    return _balances[wallet] > _totalSupply/1000;
+    //return _balances[wallet] > _totalSupply/1000;
+    return _balances[wallet] >= 1000000000;
   }
 
   function name() external view returns (string memory) {

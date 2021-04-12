@@ -6,15 +6,17 @@ const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 // Load compiled artifacts
 const MeowDAO = artifacts.require('MeowDAO');
 const Grumpy = artifacts.require('Grumpy');
+const FuelTank = artifacts.require('GrumpyFuelTank');
  
 contract('MeowDAO (proxy)', function ([defaultAccount]) {
   beforeEach(async function () {
     this.grumpy = await Grumpy.new();
-    this.meow = await deployProxy(MeowDAO, [this.grumpy.address], {initializer: '__MeowDAO_init'});
+    this.fuelTank = await FuelTank.new(this.grumpy.address);
+    this.meow = await deployProxy(MeowDAO, [this.grumpy.address, this.fuelTank.address], {initializer: '__MeowDAO_init'});
   });
  
   it('Initialized total supply should be 0', async function () {
-    expect((await this.meow.totalSupply()).toString()).to.equal('0');
+    expect((await this.meow.totalSupply()).toString()).to.equal('1000000000000000000');
   });
 
   it('The name should equal to MeowDaw', async function()  {
