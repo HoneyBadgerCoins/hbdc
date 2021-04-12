@@ -14,5 +14,5 @@ module.exports = async function (deployer, network, [defaultAccount]) {
   }
 
   await deployer.deploy(Grumpy);
-  await deployProxy(MeowDAO, [Grumpy.address],  { deployer, initializer: '__MeowDAO_init' });
+  //await deployProxy(MeowDAO, [Grumpy.address],  { deployer, initializer: '__MeowDAO_init' });
 };
