@@ -9,13 +9,8 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./FixidityLib.sol";
 
-import "./GrumpyCoin.sol";
-
-//TODO: remove this for build, just for compiling
-import "./GrumpyFuelTank.sol";
-
-contract IgnitionSwitch {
-  function openNozzle() public {}
+interface IgnitionSwitch {
+  function openNozzle() external;
 }
  
 contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
@@ -65,7 +60,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     require(block.timestamp < swapEndTime);
     require(!isStaked(user), "cannot swap into staked wallet");
 
-    Grumpy grumpy = Grumpy(grumpyAddress);
+    IERC20Upgradeable grumpy = IERC20Upgradeable(grumpyAddress);
     
     grumpy.transferFrom(user, grumpyFuelTankAddress, amount);
 
@@ -82,6 +77,10 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   function _swapGrumpyTest(address user, uint256 amount) public {
     _swapGrumpyInternal(user, amount);
+  }
+
+  function _testAdvanceEndTime () external {
+    swapEndTime = swapEndTime - (86400 * 10);
   }
 
   function initializeCoinThruster() external {

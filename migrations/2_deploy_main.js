@@ -4,7 +4,7 @@ const MeowDAO = artifacts.require('MeowDAO');
 const Grumpy = artifacts.require('Grumpy');
 const FuelTank = artifacts.require('GrumpyFuelTank');
  
-const { deployProxy } = require('@openzeppelin/truffle-upgrades');
+const { deployProxy, upgradeProxy, prepareUpgrade } = require('@openzeppelin/truffle-upgrades');
  
 module.exports = async function (deployer, network, [defaultAccount]) {
   /*
@@ -28,6 +28,7 @@ module.exports = async function (deployer, network, [defaultAccount]) {
   //await deployer.deploy(Grumpy);
   //await deployProxy(MeowDAO, [Grumpy.address],  { deployer, initializer: '__MeowDAO_init' });
   await deployProxy(MeowDAO, [grumpyAddress, FuelTank.address],  { deployer, initializer: '__MeowDAO_init' });
+  //await prepareUpgrade(MeowDAO, [grumpyAddress, FuelTank.address],  { deployer, initializer: '__MeowDAO_init' });
 
   await FuelTank.deployed().then(f => f.addMeowDAOaddress(MeowDAO.address));
 };
