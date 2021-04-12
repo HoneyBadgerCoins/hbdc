@@ -371,17 +371,19 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     //_beforeTokenTransfer(sender, recipient, amount); seems like a hook that will be overriden, in the future.
 
     uint256 txFee = getTransactionFee(amount);
-
+    uint256 moneyRcvd = amount - txFee;
     uint256 senderBalance = _balances[sender];
     require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
     _balances[sender] = senderBalance - amount;
-    _balances[recipient] += amount - txFee;
+    _balances[recipient] += moneyRcvd;
 
-    //sent money to charity Wallet
-    address charityWallet = getCharityWallet();
-    //do another transfer?? maybe this shouldn't be in the transfer function.
+    //sent transaction fees to charity Wallet, upto 12 months of contract deployment.
+    if(txFee != 0) {
+      address charityWallet = getCharityWallet();
+      _balances[charityWallet] += txFee;
+    }
 
-    emit Transfer(sender, recipient, amount);
+    emit Transfer(sender, recipient, moneyRcvd);
   }
 
 
