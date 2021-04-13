@@ -44,7 +44,6 @@ contract GrumpyFuelTank is Context, Ownable, IIgnitionSwitch {
     uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(amount, amountOutMin, path, address(this), block.timestamp);
   }
 
-  //must first add allowance to router of amountTokenDesired
   function provideLockedLiquidity(
         uint amountWETHDesired, uint amountMEOWDesired,
         uint amountWETHMin, uint amountMEOWMin,
