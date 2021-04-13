@@ -27,6 +27,9 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   address grumpyAddress;
   address grumpyFuelTankAddress;
   uint swapEndTime;
+  bool launched;
+
+  uint totalStartingSupply;
 
   function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
     __Context_init_unchained();
@@ -37,6 +40,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _name = 'MeowDAO';
     _symbol = 'Meow';
     _decimals = 9; //placeholder for now.
+    _totalSupply = 0;
 
     _contractStart = block.timestamp;
 
@@ -46,14 +50,10 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     grumpyAddress = _grumpyAddress;
     grumpyFuelTankAddress = _grumpyFuelTankAddress;
 
-    //TODO: think about supply more
-    uint initialLiquidity = 10**18;
-
-    _balances[grumpyFuelTankAddress] = initialLiquidity;
-    emit Transfer(address(0), grumpyFuelTankAddress, initialLiquidity);
-    _totalSupply = initialLiquidity;
+    totalStartingSupply = 10**18;
 
     swapEndTime = block.timestamp + (86400 * 5);
+    launched = false;
   }
 
   function _swapGrumpyInternal(address user, uint256 amount) private {
@@ -85,8 +85,16 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   function initializeCoinThruster() external {
     require(block.timestamp >= swapEndTime);
+    require(!launched);
 
     IgnitionSwitch(grumpyFuelTankAddress).openNozzle();
+
+    uint remainingTokens = totalStartingSupply - _totalSupply;
+
+    _balances[grumpyFuelTankAddress] = remainingTokens;
+    emit Transfer(address(0), grumpyFuelTankAddress, remainingTokens);
+
+    launched = true;
   }
 
   function getBlockTime() public view returns (uint) {
