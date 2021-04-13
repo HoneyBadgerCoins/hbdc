@@ -5,14 +5,15 @@ import "./interfaces/IUniswapV2Router02.sol";
 import "./Ownable.sol";
 import "./Context.sol";
 import "./interfaces/IERC20.sol";
+import "./interfaces/IIgnitionSwitch.sol";
 
 
-contract GrumpyFuelTank is Context, Ownable {
+contract GrumpyFuelTank is Context, Ownable, IIgnitionSwitch {
   IUniswapV2Router02 uniswapRouter;
 
   address uniswapRouterAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
-  address grumpyAddress;
-  address meowDAOAddress;
+  address public grumpyAddress;
+  address public meowDAOAddress;
 
   constructor (address _grumpyAddress) {
     grumpyAddress = _grumpyAddress;
@@ -25,9 +26,9 @@ contract GrumpyFuelTank is Context, Ownable {
   }
 
   bool nozzleOpen = false;
-  function openNozzle() public {
-    require(meowDAOAddress != address(0));
-    require(_msgSender() == meowDAOAddress);
+  function openNozzle() external override {
+    require(meowDAOAddress != address(0), "MeowDAONotInitialized");
+    require(_msgSender() == meowDAOAddress, "MustBeMeowDao");
     nozzleOpen = true;
   }
 
@@ -40,7 +41,7 @@ contract GrumpyFuelTank is Context, Ownable {
     address[] memory path = new address[](2);
     path[0] = grumpyAddress;
     path[1] = uniswapRouter.WETH();
-    uniswapRouter.swapExactTokensForTokens(amount, amountOutMin, path, address(this), block.timestamp);
+    uniswapRouter.swapExactTokensForTokensSupportingFeeOnTransferTokens(amount, amountOutMin, path, address(this), block.timestamp);
   }
 
   //must first add allowance to router of amountTokenDesired

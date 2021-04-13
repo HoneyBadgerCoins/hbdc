@@ -72,6 +72,14 @@ contract('MeowDAO', accounts => {
 
     meow = await MeowDAO.new(grumpy.address, fuelTank.address, {initializer: '__MeowDAO_init'});
     await meow.__MeowDAO_init(grumpy.address, fuelTank.address);
+
+    await fuelTank.addMeowDAOaddress(meow.address);
+  });
+
+  it.only('should initializeCoinThruster correctly', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [1000000000, 2000000000]);
+    await meow._testAdvanceEndTime();
+    await meow.initializeCoinThruster();
   });
 
   it('should calculateYield correctly', async function () {
@@ -94,7 +102,7 @@ contract('MeowDAO', accounts => {
   it('should initialize supply by default', async function () {
     var ts = await meow.totalSupply();
 
-    assert.equal(ts.toString(), '1000000000000000000', 'total supply isn\'t right');
+    assert.equal(ts.toString(), '0', 'total supply isn\'t right');
   });
 
   it('should initializeAccounts correctly', async function () {

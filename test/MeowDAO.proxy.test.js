@@ -16,7 +16,7 @@ contract('MeowDAO (proxy)', function ([defaultAccount]) {
   });
  
   it('Initialized total supply should be 0', async function () {
-    expect((await this.meow.totalSupply()).toString()).to.equal('1000000000000000000');
+    expect((await this.meow.totalSupply()).toString()).to.equal('0');
   });
 
   it('The name should equal to MeowDaw', async function()  {

@@ -8,11 +8,8 @@ import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./FixidityLib.sol";
+import "./interfaces/IIgnitionSwitch.sol";
 
-interface IgnitionSwitch {
-  function openNozzle() external;
-}
- 
 contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
   using AddressUpgradeable for address;
@@ -29,7 +26,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   uint swapEndTime;
   bool launched;
 
-  uint totalStartingSupply;
+  uint256 totalStartingSupply;
 
   function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
     __Context_init_unchained();
@@ -44,13 +41,10 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     _contractStart = block.timestamp;
 
-    //TODO: this needs lots more thinking
-    _balances[address(0)] = _totalSupply;
-
     grumpyAddress = _grumpyAddress;
     grumpyFuelTankAddress = _grumpyFuelTankAddress;
 
-    totalStartingSupply = 10**18;
+    totalStartingSupply = 100000000 * 10**6 * 10**9;
 
     swapEndTime = block.timestamp + (86400 * 5);
     launched = false;
@@ -84,12 +78,12 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function initializeCoinThruster() external {
-    require(block.timestamp >= swapEndTime);
-    require(!launched);
+    require(block.timestamp >= swapEndTime, "NotReady");
+    require(launched == false, "AlreadyLaunched");
 
-    IgnitionSwitch(grumpyFuelTankAddress).openNozzle();
+    IIgnitionSwitch(grumpyFuelTankAddress).openNozzle();
 
-    uint remainingTokens = totalStartingSupply - _totalSupply;
+    uint256 remainingTokens = totalStartingSupply - _totalSupply;
 
     _balances[grumpyFuelTankAddress] = remainingTokens;
     emit Transfer(address(0), grumpyFuelTankAddress, remainingTokens);

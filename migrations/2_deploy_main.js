@@ -14,13 +14,15 @@ module.exports = async function (deployer, network, [defaultAccount]) {
   */
 
   let grumpyAddress;
+  let g;
 
   if (network.startsWith('test')) {
-    await deployer.deploy(Grumpy);
+    g = await deployer.deploy(Grumpy);
     grumpyAddress = Grumpy.address;
   }
   else {
     grumpyAddress = '0x15388d9E6F6573C44f519B0b1B42397843e7fC56';
+    g = await Grumpy.at(grumpyAddress);
   }
 
   await deployer.deploy(FuelTank, grumpyAddress);
@@ -30,5 +32,16 @@ module.exports = async function (deployer, network, [defaultAccount]) {
   await deployProxy(MeowDAO, [grumpyAddress, FuelTank.address],  { deployer, initializer: '__MeowDAO_init' });
   //await prepareUpgrade(MeowDAO, [grumpyAddress, FuelTank.address],  { deployer, initializer: '__MeowDAO_init' });
 
-  await FuelTank.deployed().then(f => f.addMeowDAOaddress(MeowDAO.address));
+  let ft = await FuelTank.deployed();
+  let meow = await MeowDAO.deployed();
+
+  await ft.addMeowDAOaddress(MeowDAO.address);
+
+  if (!network.startsWith('test')) {
+    await g.approve(meow.address, '10000000000000000000');
+    await meow.swapGrumpy('10000000000000000000');
+
+    await meow._testAdvanceEndTime();
+    await meow.initializeCoinThruster();
+  }
 };
