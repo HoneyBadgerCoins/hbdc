@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./FixidityLib.sol";
 
 import "./GrumpyCoin.sol";
@@ -13,11 +14,13 @@ import "./GrumpyCoin.sol";
 contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
   using AddressUpgradeable for address;
+  using SafeMath for uint256;
 
   uint256 _totalSupply;
   string private _name;
   string private _symbol;
   uint8 private _decimals;
+  uint private _contractStart;
 
   address grumpyAddress;
 
@@ -31,6 +34,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _symbol = 'Meow';
     _decimals = 9; //placeholder for now.
     _totalSupply = 0;
+    _contractStart = block.timestamp;
     
     //TODO: this needs lots more thinking
     _balances[address(0)] = _totalSupply;
@@ -87,7 +91,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   //TODO: needs initialization
   address currentCharityWallet;
 
-  function getCharityWallet() external view returns (address) {
+  function getCharityWallet() public view returns (address) {
     return currentCharityWallet;
   }
 
@@ -127,9 +131,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     if (!stakeCooldownComplete(sender)) {
       currentlyLocked[sender] = true;
-    }
-
-    else {
+    } else {
       reifyYield(sender);
 
       address vote = currentVotes[sender];
@@ -172,7 +174,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _transfer(_msgSender(), wallet, amount); 
   } 
 
-
   //TODO: make this private
   function _voteForAddressBy(address charityWallet, address sender) public {
 
@@ -182,11 +183,12 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     address vote = currentVotes[sender];
     if (vote != address(0)) {
       voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
-   }
+    }
 
     uint256 newVoteWeight = _balances[sender];
     voteWeights[sender] = newVoteWeight;
 
+    // If wallet was never voted for before add it to voteIterator
     if (!walletWasVotedFor[charityWallet]) {
       voteIterator.push(charityWallet);
       walletWasVotedFor[charityWallet] = true;
@@ -225,13 +227,13 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     emit NewCharityWallet(currentCharityWallet, winner);
 
-    //old winner was staked
+    //if old winner was staked
     if (currentCharityWallet != address(0) && currentlyStaked[currentCharityWallet]) {
-      //reset their yield period start to the present
+      //reset their yield period start to the present so they can't double dip
       periodStart[currentCharityWallet] = block.timestamp;
     }
 
-    //new winner is staked
+    //if new charrity address is staked
     if (winner != address(0) && currentlyStaked[winner]) {
       //reify the new wallet before they become the currentCharityWallet
       reifyYield(winner);
@@ -277,6 +279,29 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return block.timestamp - periodStart[wallet];
   }
 
+  //TODO: public for now need to be private on release
+  //TODO: underflow and overflow
+  //TODO: do some bounds testing
+  function getTransactionFee(uint256 txAmt) public view returns (uint256){
+    uint period = block.timestamp - _contractStart;
+    uint256 month3 = 7884000;
+    uint256 month6 = 15768000;
+    uint256 month9 = 23652000;
+    uint256 month12= 31536000;
+
+    if(period <= month3) {
+      return (txAmt/10000) * 100; //0.01
+    } else if (period <= month6) {
+      return (txAmt/10000) * 75;  //0.0075
+    } else if (period <= month9) {
+      return (txAmt/10000) * 50;  //0.0050
+    } else if (period <= month12) {
+      return (txAmt/10000) * 25;  //0.0025
+    } else {
+      return 0;
+    }
+  } 
+
   function reifyYield(address wallet) public {
     if (currentCharityWallet == wallet) return;
     require(isStaked(wallet), 'MstBeStkd');
@@ -315,6 +340,10 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return _decimals;
   }
 
+  function contractStart() external view returns (uint) {
+    return _contractStart;
+  }
+
   //overriding the erc20 spec
   function totalSupply() external view override returns (uint256) {
     return _totalSupply;
@@ -324,7 +353,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   function balanceOf(address account) public view virtual override returns (uint256) {
     return _balances[account];
   }
-
 
   //don't know if this is needed? we could take the virtual part
   function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
@@ -338,22 +366,26 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     require(!isStaked(sender), "StkdWlltCnntTrnsf");
 
     //_beforeTokenTransfer(sender, recipient, amount); seems like a hook that will be overriden, in the future.
-
     uint256 senderBalance = _balances[sender];
     require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
+    uint256 txFee = getTransactionFee(amount);
+    uint256 amountMinusFee = amount - txFee;
     _balances[sender] = senderBalance - amount;
-    _balances[recipient] += amount;
+    _balances[recipient] += amountMinusFee;
 
-    emit Transfer(sender, recipient, amount);
+    //sent transaction fees to charity Wallet, upto 12 months of contract deployment.
+    if (txFee != 0) {
+      address charityWallet = getCharityWallet();
+      _balances[charityWallet] += txFee;
+    }
+
+    emit Transfer(sender, recipient, amountMinusFee);
   }
-
-
 
   function allowance(address owner, address spender) public view virtual override returns (uint256) {
     return _allowances[owner][spender];
   }
 
-  
   function approve(address spender, uint256 amount) public override returns (bool) {
     _approve(_msgSender(), spender, amount); //_msgSender()
     return true;
@@ -367,7 +399,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _allowances[owner][spender] = amount;
     emit Approval(owner, spender, amount);
   }
-
 
   function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
     _transfer(sender, recipient, amount);

@@ -113,7 +113,43 @@ contract('MeowDAO', accounts => {
     );
   });
 
+  it('Tx fee should be 1000 after 2months for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const month2= 5184000 
+    await increaseTime(month2);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('1000');
+  });
+
+  it('Tx fee should be 750 after 5 months for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const month5 = 12960000;
+    await increaseTime(month5);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('750'); 
+  });
+
+  it('Tx fee should be 500 after 8 months for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const month8 = 20736000;
+    await increaseTime(month8);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('500');
+  });
+
+  it('Tx fee should be 250 after 10 month for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const month10 = 25920000;
+    await increaseTime(month10);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('250');
+  });
+
+  it('Tx fee should be 0 after 12 month for 100000', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [10000, 1000]);
+    const aftermonth12 = 31537000;
+    await increaseTime(aftermonth12);
+    expect((await meow.getTransactionFee(100000)).toString()).to.equal('0');
+  });
+
   it('should not allow small users to stake', async function () {
+
     await initializeAccounts(grumpy, meow, accounts, [1000, 100000000000]);
 
     const a = await meow.balanceOf(accounts[0]);
@@ -219,6 +255,7 @@ contract('MeowDAO', accounts => {
         expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
       });
     });
+
     context("staked wallet becomes charityWallet by own vote", async function () {
       beforeEach(async function() {
         await meow._voteForAddressBy(accounts[0], accounts[0]);
@@ -229,11 +266,11 @@ contract('MeowDAO', accounts => {
         expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
       });
 
-      context("1 year passes", function () {
+      context("1 year passes after staked wallet becomes charity wallet", function () {
         beforeEach(async function() {
           await increaseTime(31556952);
         });
-        it('should not get any more yield', async function () {
+        it('should not get any more yield after becoming charity wallet', async function () {
           await meow.reifyYield(accounts[0]);
           const b = await meow.balanceOf(accounts[0]);
           expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
