@@ -131,9 +131,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     if (!stakeCooldownComplete(sender)) {
       currentlyLocked[sender] = true;
-    }
-
-    else {
+    } else {
       reifyYield(sender);
 
       address vote = currentVotes[sender];
@@ -175,7 +173,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     reifyYield(wallet);
     _transfer(_msgSender(), wallet, amount); 
   } 
-
 
   //TODO: make this private
   function _voteForAddressBy(address charityWallet, address sender) public {
@@ -356,7 +353,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return _balances[account];
   }
 
-
   //don't know if this is needed? we could take the virtual part
   function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
     _transfer(_msgSender(), recipient, amount); //look at why _msgSender() is used.
@@ -369,30 +365,26 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     require(!isStaked(sender), "StkdWlltCnntTrnsf");
 
     //_beforeTokenTransfer(sender, recipient, amount); seems like a hook that will be overriden, in the future.
-
-    uint256 txFee = getTransactionFee(amount);
-    uint256 moneyRcvd = amount - txFee;
     uint256 senderBalance = _balances[sender];
     require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
+    uint256 txFee = getTransactionFee(amount);
+    uint256 amountMinusFee = amount - txFee;
     _balances[sender] = senderBalance - amount;
-    _balances[recipient] += moneyRcvd;
+    _balances[recipient] += amountMinusFee;
 
     //sent transaction fees to charity Wallet, upto 12 months of contract deployment.
-    if(txFee != 0) {
+    if (txFee != 0) {
       address charityWallet = getCharityWallet();
       _balances[charityWallet] += txFee;
     }
 
-    emit Transfer(sender, recipient, moneyRcvd);
+    emit Transfer(sender, recipient, amountMinusFee);
   }
-
-
 
   function allowance(address owner, address spender) public view virtual override returns (uint256) {
     return _allowances[owner][spender];
   }
 
-  
   function approve(address spender, uint256 amount) public override returns (bool) {
     _approve(_msgSender(), spender, amount); //_msgSender()
     return true;
@@ -406,7 +398,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _allowances[owner][spender] = amount;
     emit Approval(owner, spender, amount);
   }
-
 
   function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
     _transfer(sender, recipient, amount);
