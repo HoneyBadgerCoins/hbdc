@@ -255,6 +255,7 @@ contract('MeowDAO', accounts => {
         expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
       });
     });
+
     context("staked wallet becomes charityWallet by own vote", async function () {
       beforeEach(async function() {
         await meow._voteForAddressBy(accounts[0], accounts[0]);
@@ -265,11 +266,11 @@ contract('MeowDAO', accounts => {
         expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
       });
 
-      context("1 year passes", function () {
+      context("1 year passes after staked wallet becomes charity wallet", function () {
         beforeEach(async function() {
           await increaseTime(31556952);
         });
-        it('should not get any more yield', async function () {
+        it('should not get any more yield after becoming charity wallet', async function () {
           await meow.reifyYield(accounts[0]);
           const b = await meow.balanceOf(accounts[0]);
           expect(b.toString()).to.satisfy(priceRange('106998', '107009'));
