@@ -76,7 +76,7 @@ contract('MeowDAO', accounts => {
     await fuelTank.addMeowDAOaddress(meow.address);
   });
 
-  it.only('should initializeCoinThruster correctly', async function () {
+  it('should initializeCoinThruster correctly', async function () {
     await initializeAccounts(grumpy, meow, accounts, [1000000000, 2000000000]);
     await meow._testAdvanceEndTime();
     await meow.initializeCoinThruster();
@@ -245,7 +245,7 @@ contract('MeowDAO', accounts => {
     await meow.sendFundsToStakedWallet(accounts[1], 50000000000);
 
     let transfer = await meow.balanceOf(accounts[1]);
-    expect(transfer.toString()).to.equal("150000000000");
+    expect(transfer.toString()).to.equal("149500000000");
   });
 
   //TODO: ensure the locking mechanism works for unstaking

@@ -13,7 +13,7 @@ import "./interfaces/IIgnitionSwitch.sol";
 contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
   using AddressUpgradeable for address;
-  using SafeMath for uint256;
+  using SafeMathUpgradeable for uint256;
 
   uint256 _totalSupply;
   string private _name;
