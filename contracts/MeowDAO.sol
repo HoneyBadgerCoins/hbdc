@@ -27,7 +27,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   uint swapEndTime;
   bool launched;
 
-  uint256 totalStartingSupply;
+  uint256 public totalStartingSupply;
   uint256 public operFund;
 
   function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
@@ -47,7 +47,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     grumpyAddress = _grumpyAddress;
     grumpyFuelTankAddress = _grumpyFuelTankAddress;
 
-    totalStartingSupply = 100000000 * 10**6 * 10**9; //100_000_000_000_000.000_000_000 
+    totalStartingSupply = 10**9 * 10**14; //1_000_000_000.00_000_000_000_000 1 billion meowdaos. 10^23
 
     swapEndTime = block.timestamp + (86400 * 5);
     launched = false;

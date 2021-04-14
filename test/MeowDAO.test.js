@@ -81,6 +81,16 @@ contract('MeowDAO', accounts => {
     await fuelTank.addMeowDAOaddress(meow.address);
   });
 
+  it('should totalStartingSupply should be 10^23', async function () {
+    await initializeAccounts(grumpy, meow, accounts, [1000000000, 2000000000]);
+
+    const totalsSupply = await meow.totalStartingSupply();
+    expect(totalsSupply.toString()).to.equal("100000000000000000000000");
+
+  });
+
+
+
   it('should initializeCoinThruster correctly', async function () {
     await initializeAccounts(grumpy, meow, accounts, [1000000000, 2000000000]);
     await meow._testAdvanceEndTime();
