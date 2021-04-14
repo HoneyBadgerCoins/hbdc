@@ -8,7 +8,8 @@ async function initializeAccounts(grumpy, meow, accounts, accountValues) {
 
   for (let k = 0; k < accountValues.length; k++) {
     if (k != 0) {
-      await grumpy.transfer(accounts[k], accountValues[k] * 2);
+      await grumpy.transfer(accounts[k], accountValues[k]);
+      await grumpy.transfer(accounts[k], accountValues[k]);
     }
 
     //console.log(accounts[k], meow.address, accountValues[k]);
@@ -28,7 +29,11 @@ async function getErrorMsg(f) {
 }
 
 function priceRange(a, b) {
-  return s => s >= a && s <= b;
+  return s => s.length == a.length && s >= a && s <= b;
+}
+
+function B(string) {
+  return web3.utils.toBN(string);
 }
 
 // Load compiled artifacts
@@ -113,7 +118,7 @@ contract('MeowDAO', accounts => {
   });
 
   it('should stake correctly', async function () {
-    await initializeAccounts(grumpy, meow, accounts, [1000000000]);
+    await initializeAccounts(grumpy, meow, accounts, [B('10000000000000000')]);
 
     expect(await getErrorMsg(() => meow.reifyYield(accounts[0]))).to.equal('MstBeStkd');
 
@@ -128,9 +133,7 @@ contract('MeowDAO', accounts => {
     await meow.unstakeWallet();
 
     let charityWallet = await meow.balanceOf(accounts[4]);
-    expect(charityWallet.toString()).to.satisfy(s =>
-      s >= '69999998' && s <= '70000002'
-    );
+    expect(charityWallet.toString()).to.satisfy(priceRange('699999980000000', '700000030000000'));
   });
 
   it('Tx fee should be 1000 after 2months for 100000', async function () {
@@ -179,7 +182,7 @@ contract('MeowDAO', accounts => {
   });
 
   it('should accurately calculate yield with intermediate reifications', async function () {
-    await initializeAccounts(grumpy, meow, accounts, [1000000000]);
+    await initializeAccounts(grumpy, meow, accounts, [B('10000000000000000')]);
     await meow.stakeWallet();
     await increaseTime(10000000);
     await meow.reifyYield(accounts[0]);
@@ -189,13 +192,12 @@ contract('MeowDAO', accounts => {
     await meow.unstakeWallet();
 
     let bal = await meow.balanceOf(accounts[0]);
-    expect(bal.toString()).to.satisfy(b =>
-      b >= '1069999999' && b <= "1070000008"
-    );
+    expect(bal.toString()).to.satisfy(priceRange('10699999990000000', "10700000080000000"));
   });
 
   it('should apply and unapply user votes correctly', async function () {
-    await initializeAccounts(grumpy, meow, accounts, [1000000000, 2000000000, 1500000000]);
+    await initializeAccounts(grumpy, meow, accounts,
+      [B('10000000000000000'), B('20000000000000000'), B('15000000000000000')]);
     await meow._stakeWalletFor(accounts[0]);
     await meow._stakeWalletFor(accounts[1]);
     await meow._stakeWalletFor(accounts[2]);
@@ -227,25 +229,25 @@ contract('MeowDAO', accounts => {
 
   //TODO: should allow a user to update their vote weight by revoting for the same address
   it('should not allow staked wallets to send or receive funds', async function() {
-    await initializeAccounts(grumpy, meow, accounts, [1000000000]);
+    await initializeAccounts(grumpy, meow, accounts, [B('10000000000000000')]);
     await meow.approve(accounts[0], 10000000);
     await meow.stakeWallet();
     expect(await getErrorMsg(() => meow.transferFrom(accounts[0], accounts[1], 10000000))).to.equal("StkdWlltCnntTrnsf");
   });
 
   it("Allows a user to send funds to a staked wallet using sendFundsToStakeWallet", async function (){
-    await initializeAccounts(grumpy, meow, accounts, [1000000000000, 100000000000]);
+    await initializeAccounts(grumpy, meow, accounts, [B('10000000000000000'), B('10000000000000000')]);
 
     await meow._stakeWalletFor(accounts[1]);
     await meow.sendFundsToStakedWallet(accounts[1], 50000000000);
 
     let transfer = await meow.balanceOf(accounts[1]);
-    expect(transfer.toString()).to.equal("149500000000");
+    expect(transfer.toString()).to.equal("10000049500000000");
   });
 
   //TODO: ensure the locking mechanism works for unstaking
   it("locking should work with unstaking", async function (){
-    await initializeAccounts(grumpy, meow, accounts, [100000000000, 10000000000]);
+    await initializeAccounts(grumpy, meow, accounts, [B('10000000000000000'), B('10000000000000000')]);
     await meow._stakeWalletFor(accounts[1]);
     await meow._unstakeWalletFor(accounts[1], true);
     let val = await meow.currentlyLocked(accounts[1]);    
@@ -254,7 +256,8 @@ contract('MeowDAO', accounts => {
 
   context('Pausing Staking', async function () {
     beforeEach(async function() {
-      await initializeAccounts(grumpy, meow, accounts, [10000000000, 10000000000, 10000000000]);
+      await initializeAccounts(grumpy, meow, accounts,
+        [B('10000000000000000'), B('10000000000000000'), B('10000000000000000')]);
       await meow._stakeWalletFor(accounts[0]);
       await meow._stakeWalletFor(accounts[1]);
       await meow._stakeWalletFor(accounts[2]);
@@ -270,7 +273,7 @@ contract('MeowDAO', accounts => {
       it('should not get any more yield', async function () {
         await meow.reifyYield(accounts[0]);
         const b = await meow.balanceOf(accounts[0]);
-        expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
+        expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
       });
     });
 
@@ -281,7 +284,7 @@ contract('MeowDAO', accounts => {
 
       it("should reify the staked wallet which has been voted upon", async function () {
         const b = await meow.balanceOf(accounts[0]);
-        expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
+        expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
       });
 
       context("1 year passes after staked wallet becomes charity wallet", function () {
@@ -291,7 +294,7 @@ contract('MeowDAO', accounts => {
         it('should not get any more yield after becoming charity wallet', async function () {
           await meow.reifyYield(accounts[0]);
           const b = await meow.balanceOf(accounts[0]);
-          expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
+          expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
         });
         context("it loses the vote", function () {
           beforeEach(async function() {
@@ -300,7 +303,7 @@ contract('MeowDAO', accounts => {
           it('should not get any more yield', async function () {
             await meow.reifyYield(accounts[0]);
             const b = await meow.balanceOf(accounts[0]);
-            expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
+            expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
           });
           it('should reset currentCharityWallet to address0', async function () {
             const w = await meow.getCharityWallet();
@@ -313,7 +316,7 @@ contract('MeowDAO', accounts => {
           });
           it('should not get any more yield', async function () {
             const b = await meow.balanceOf(accounts[0]);
-            expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
+            expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
           });
           it('should reset currentCharityWallet to address0', async function () {
             const w = await meow.getCharityWallet();
@@ -330,7 +333,7 @@ contract('MeowDAO', accounts => {
 
         it("should not have any effect", async function () {
           const b = await meow.balanceOf(accounts[0]);
-          expect(b.toString()).to.satisfy(priceRange('10699800000', '10700900000'));
+          expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
         });
 
         context('staked charityWallet loses the vote', async function () {
@@ -341,7 +344,7 @@ contract('MeowDAO', accounts => {
 
           it("should receives the yield from the deciding vote", async function () {
             const b = await meow.balanceOf(accounts[0]);
-            expect(b.toString()).to.satisfy(priceRange('11399800000', '11400900000'));
+            expect(b.toString()).to.satisfy(priceRange('11399800000000000', '11400900000000000'));
           });
         });
       });
