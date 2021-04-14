@@ -44,5 +44,13 @@ contract('MeowDAO (proxy)', function ([defaultAccount]) {
     expect((blocktime).toString()).to.equal(startTime.toString());
   });
 
+  //starting supply of meowdao is 100_000_000_000_000.000_000_000 or 1*10 ^23
+  //0.05 of meowdao is 5_000_000_000_000.000_000_000 or 5*10^21
+  it('operation fund should be 0.05 of the total starting supply which is 5*10^21  ', async function () { 
+    expect((await this.meow.operFund()).toString()).to.equal('5000000000000000000000');
+  });
+
+
+
 
 });
