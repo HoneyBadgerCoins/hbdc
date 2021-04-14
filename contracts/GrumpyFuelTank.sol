@@ -18,10 +18,10 @@ contract GrumpyFuelTank is Context, Ownable, IFuelTank {
   mapping (address => uint) reclaimableBalances;
   uint public liquidityBalance;
 
-  uint reclaimableGuaranteeTime;
+  uint reclaimGuaranteeTime;
+  uint reclaimStartTime;
 
   constructor (address _grumpyAddress) {
-    reclaimableGuaranteeTime = block.timestamp + (86400 * 10);
     grumpyAddress = _grumpyAddress;
     uniswapRouter = IUniswapV2Router02(uniswapRouterAddress);
   }
@@ -35,6 +35,10 @@ contract GrumpyFuelTank is Context, Ownable, IFuelTank {
   function openNozzle() external override {
     require(meowDAOAddress != address(0), "MeowDAONotInitialized");
     require(msg.sender == meowDAOAddress, "MustBeMeowDao");
+
+    reclaimStartTime = block.timestamp + (86400 * 2);
+    reclaimGuaranteeTime = block.timestamp + (86400 * 9);
+
     nozzleOpen = true;
   }
 
@@ -54,7 +58,8 @@ contract GrumpyFuelTank is Context, Ownable, IFuelTank {
   }
 
   function reclaimGrumpies() public {
-    require(nozzleOpen, "MustBePhase2");
+    require(nozzleOpen, "Phase1");
+    require(block.timestamp >= reclaimStartTime, "Phase2");
     address sender = msg.sender;
     require(reclaimableBalances[sender] > 0, "BalanceEmpty");
 
@@ -65,7 +70,7 @@ contract GrumpyFuelTank is Context, Ownable, IFuelTank {
   //TODO: pass deadline
   function sellGrumpy(uint256 amount, uint256 amountOutMin) public onlyOwner {
     require(nozzleOpen);
-    if (block.timestamp < reclaimableGuaranteeTime) {
+    if (block.timestamp < reclaimGuaranteeTime) {
       require(amount <= liquidityBalance, "NotEnoughFuel");
       liquidityBalance -= amount;
     }

@@ -97,6 +97,38 @@ contract('MeowDAO', accounts => {
     await meow.initializeCoinThruster();
   });
 
+  context('FuelTank', async function() {
+    beforeEach(async function () {
+      await initializeAccounts(grumpy, meow, accounts, [1000000000, 2000000000]);
+    });
+    it('should not allow users to reclaim during phase 1', async function () {
+      await expectRevert(fuelTank.reclaimGrumpies(), "Phase1");
+    });
+    context('Phase 2', async function () {
+      beforeEach(async function () {
+        await time.increase(86400 * 6);
+        await meow.initializeCoinThruster();
+      });
+      it('should not allow users to reclaim during phase 2', async function () {
+        await expectRevert(fuelTank.reclaimGrumpies(), "Phase2");
+      });
+      context('Phase 3', async function () {
+        beforeEach(async function () {
+          await time.increase(86400 * 3);
+        });
+        it('should allow users to reclaim during phase 3', async function () {
+          const b = await grumpy.balanceOf(accounts[0]);
+          await fuelTank.reclaimGrumpies();
+          const b2 = await grumpy.balanceOf(accounts[0]);
+
+          expect(b2.sub(b).toString()).to.equal('720000000');
+
+          expectRevert(fuelTank.reclaimGrumpies(), 'BalanceEmpty');
+        });
+      });
+    });
+  });
+
   it('should calculateYield correctly', async function () {
     const secondsInYear = 31556952;
 
