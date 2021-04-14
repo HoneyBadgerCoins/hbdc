@@ -242,7 +242,7 @@ contract('MeowDAO', accounts => {
     await meow.sendFundsToStakedWallet(accounts[1], 50000000000);
 
     let transfer = await meow.balanceOf(accounts[1]);
-    expect(transfer.toString()).to.equal("10000049500000000");
+    expect(transfer.toString()).to.equal("10000050000000000");
   });
 
   //TODO: ensure the locking mechanism works for unstaking
