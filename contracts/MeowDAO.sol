@@ -375,7 +375,12 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   //this can be changed into external, if not called internally
   function balanceOf(address account) public view virtual override returns (uint256) {
-    return _balances[account];
+    uint b = _balances[account];
+
+    if (isStaked(account) && getCharityWallet() != account) {
+      return b + calculateYield(b, getCompoundingFactor(account));
+    }
+    return b;
   }
 
   //don't know if this is needed? we could take the virtual part
