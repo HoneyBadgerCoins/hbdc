@@ -247,7 +247,7 @@ contract('MeowDAO', accounts => {
   it("locking should work with unstaking", async function (){
     await initializeAccounts(grumpy, meow, accounts, [100000000000, 10000000000]);
     await meow._stakeWalletFor(accounts[1]);
-    await meow._unstakeWalletFor(accounts[1]);
+    await meow._unstakeWalletFor(accounts[1], true);
     let val = await meow.currentlyLocked(accounts[1]);    
     expect(val.toString()).to.equal("true");
   });

@@ -165,12 +165,13 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
    //TODO: change this to private on release
-  function _unstakeWalletFor(address sender) public {
+  function _unstakeWalletFor(address sender, bool shouldReify) public {
+    require(isStaked(sender));
 
     if (!stakeCooldownComplete(sender)) {
       currentlyLocked[sender] = true;
     } else {
-      reifyYield(sender);
+      if (shouldReify) reifyYield(sender);
 
       address vote = currentVotes[sender];
       if (vote != address(0)) {
@@ -183,29 +184,11 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   } 
 
   function unstakeWallet() public {
-    address sender = _msgSender();
-    require(isStaked(sender));
-    _unstakeWalletFor(sender);
+    _unstakeWalletFor(_msgSender(), true);
   }
 
-  //DONE: should allow a user to unstake without reification using a separate function
   function unstakeWalletSansReify() public {
-    address sender = _msgSender();
-    require(isStaked(sender));
-
-    if (!stakeCooldownComplete(sender)) {
-      currentlyLocked[sender] = true;
-    }
-
-    else {
-      address vote = currentVotes[sender];
-      if (vote != address(0)) {
-        voteCounts[vote] = voteCounts[vote] - voteWeights[sender]; 
-        updateCharityWallet();
-      }
-      currentlyStaked[sender] = false;
-    }
-
+    _unstakeWalletFor(_msgSender(), false);
   }
 
   function sendFundsToStakedWallet(address wallet, uint256 amount) public {
