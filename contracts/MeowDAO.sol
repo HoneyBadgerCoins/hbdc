@@ -21,16 +21,19 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   uint8 private _decimals;
   uint private _contractStart;
 
+  //need access modifiers.
   address grumpyAddress;
   address grumpyFuelTankAddress;
   uint swapEndTime;
   bool launched;
 
   uint256 totalStartingSupply;
+  uint256 public operFund;
 
   function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
     __Context_init_unchained();
     initialize(_grumpyAddress, _grumpyFuelTankAddress);
+    _funding_init();
   }
 
   function initialize(address _grumpyAddress, address _grumpyFuelTankAddress) initializer internal{
@@ -44,10 +47,20 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     grumpyAddress = _grumpyAddress;
     grumpyFuelTankAddress = _grumpyFuelTankAddress;
 
-    totalStartingSupply = 100000000 * 10**6 * 10**9;
+    totalStartingSupply = 100000000 * 10**6 * 10**9; //100_000_000_000_000.000_000_000 
 
     swapEndTime = block.timestamp + (86400 * 5);
     launched = false;
+  }
+
+  //only need to be done once.
+  //mints the coin.
+  //adds it to dev fund wallet?
+  //returns an address?
+  function _funding_init() initializer private returns (uint256){
+    operFund = (totalStartingSupply/10000)*500; //0.05, placeholder
+    //_totalSupply += operFund; 
+    //send it to the address(0) do we have a dev wallet ???
   }
 
   function _swapGrumpyInternal(address user, uint256 amount) private {
@@ -122,6 +135,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   function isStaked(address wallet) public view returns (bool) {
     return currentlyStaked[wallet];
   }
+
   function isUnlocked(address wallet) public view returns (bool) {
     return !currentlyLocked[wallet];
   }
