@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
 import "./FixidityLib.sol";
-import "./interfaces/IIgnitionSwitch.sol";
+import "./interfaces/IFuelTank.sol";
 
 contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   using FixidityLib for int256;
@@ -70,6 +70,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     IERC20Upgradeable grumpy = IERC20Upgradeable(grumpyAddress);
     
     grumpy.transferFrom(user, grumpyFuelTankAddress, amount);
+    IFuelTank(grumpyFuelTankAddress).addTokens(user, amount);
 
     _balances[user] += amount;
 
@@ -94,7 +95,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     require(block.timestamp >= swapEndTime, "NotReady");
     require(launched == false, "AlreadyLaunched");
 
-    IIgnitionSwitch(grumpyFuelTankAddress).openNozzle();
+    IFuelTank(grumpyFuelTankAddress).openNozzle();
 
     uint256 remainingTokens = totalStartingSupply - _totalSupply;
 
@@ -265,19 +266,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     currentCharityWallet = winner;
   }
 
-  //  removeVote must call recalculateCharityWallet, but addVote doesn't have to
-  //  a delegate system might be able to optimize it somewhat
-
-  //0.0000001846468194323
-  //0.000000184646819432
-  //0.000000093668115524
-  //0.000000000936681155
-
-  //100 * (1.07)^(1/31556952)
-  //100.0000002144017221509
-
-
-  //TODO: investigate limits before overflow
   function calculateYield(uint256 principal, uint n) public pure returns (uint256) {
     int256 fixedPrincipal = int256(principal).newFixed();
 
@@ -348,7 +336,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   event Trace(uint n);
 
   function _canStake(address wallet) private view returns (bool) {
-    //return _balances[wallet] > _totalSupply/1000;
     return _balances[wallet] >= 10000000000000000; //10_000_000.000_000_000 grumpy units, placeholder
   }
 
@@ -368,12 +355,10 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return _contractStart;
   }
 
-  //overriding the erc20 spec
   function totalSupply() external view override returns (uint256) {
     return _totalSupply;
   }
 
-  //this can be changed into external, if not called internally
   function balanceOf(address account) public view virtual override returns (uint256) {
     uint b = _balances[account];
 
@@ -383,7 +368,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return b;
   }
 
-  //don't know if this is needed? we could take the virtual part
   function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
     _transfer(_msgSender(), recipient, amount); //look at why _msgSender() is used.
     return true;

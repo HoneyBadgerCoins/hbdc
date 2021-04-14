@@ -5,17 +5,23 @@ import "./interfaces/IUniswapV2Router02.sol";
 import "./Ownable.sol";
 import "./Context.sol";
 import "./interfaces/IERC20.sol";
-import "./interfaces/IIgnitionSwitch.sol";
+import "./interfaces/IFuelTank.sol";
 
 
-contract GrumpyFuelTank is Context, Ownable, IIgnitionSwitch {
+contract GrumpyFuelTank is Context, Ownable, IFuelTank {
   IUniswapV2Router02 uniswapRouter;
 
   address uniswapRouterAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
   address public grumpyAddress;
   address public meowDAOAddress;
 
+  mapping (address => uint) reclaimableBalances;
+  uint public liquidityBalance;
+
+  uint reclaimableGuaranteeTime;
+
   constructor (address _grumpyAddress) {
+    reclaimableGuaranteeTime = block.timestamp + (86400 * 10);
     grumpyAddress = _grumpyAddress;
     uniswapRouter = IUniswapV2Router02(uniswapRouterAddress);
   }
@@ -28,13 +34,42 @@ contract GrumpyFuelTank is Context, Ownable, IIgnitionSwitch {
   bool nozzleOpen = false;
   function openNozzle() external override {
     require(meowDAOAddress != address(0), "MeowDAONotInitialized");
-    require(_msgSender() == meowDAOAddress, "MustBeMeowDao");
+    require(msg.sender == meowDAOAddress, "MustBeMeowDao");
     nozzleOpen = true;
+  }
+
+  function addTokens(address user, uint amount) external override {
+    require(meowDAOAddress != address(0), "MeowDAONotInitialized");
+    require(msg.sender == meowDAOAddress, "MustBeMeowDao");
+    require(!nozzleOpen, "MustBePhase1");
+
+    require(amount > 100, "amountTooSmall"); 
+
+    uint granule = amount / 100;
+    uint reclaimable = granule * 72;
+    uint fuel = granule * 25;
+
+    liquidityBalance += fuel;
+    reclaimableBalances[user] = reclaimableBalances[user] + reclaimable;
+  }
+
+  function reclaimGrumpies() public {
+    require(nozzleOpen, "MustBePhase2");
+    address sender = msg.sender;
+    require(reclaimableBalances[sender] > 0, "BalanceEmpty");
+
+    IERC20(grumpyAddress).transfer(sender, reclaimableBalances[sender]);
+    reclaimableBalances[sender] = 0;
   }
 
   //TODO: pass deadline
   function sellGrumpy(uint256 amount, uint256 amountOutMin) public onlyOwner {
     require(nozzleOpen);
+    if (block.timestamp < reclaimableGuaranteeTime) {
+      require(amount <= liquidityBalance, "NotEnoughFuel");
+      liquidityBalance -= amount;
+    }
+
     IERC20 grumpy = IERC20(grumpyAddress);
     require(grumpy.approve(uniswapRouterAddress, amount), "Could not approve grumpy transfer");
 
