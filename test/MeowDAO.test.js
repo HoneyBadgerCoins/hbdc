@@ -94,9 +94,6 @@ contract('MeowDAO', accounts => {
 
     const yielded3 = await meow.calculateYield(1000000000, 31556952);
     expect(yielded3.toString()).to.equal("69999999");
-    //TODO: test short curcuit
-
-    //TODO: test functional limits before overflow
   });
  
   it('should initialize supply by default', async function () {
@@ -226,8 +223,6 @@ contract('MeowDAO', accounts => {
     await meow._voteForAddressBy(accounts[6], accounts[2]);
 
     expect(await meow.getCharityWallet()).to.equal(accounts[6]);
-
-    //TODO: test precise balances and also test when an account receives funds while staked and voted
   });
 
   //TODO: should allow a user to update their vote weight by revoting for the same address
