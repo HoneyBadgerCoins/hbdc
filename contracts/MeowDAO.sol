@@ -39,7 +39,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   function initialize(address _grumpyAddress, address _grumpyFuelTankAddress) initializer internal{
     _name = 'MeowDAO';
     _symbol = 'Meow';
-    _decimals = 9; //placeholder for now.
+    _decimals = 14;
     _totalSupply = 0;
 
     _contractStart = block.timestamp;
