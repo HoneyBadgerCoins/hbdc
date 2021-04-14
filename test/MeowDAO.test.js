@@ -146,7 +146,7 @@ contract('MeowDAO', accounts => {
   it('should initialize supply by default', async function () {
     var ts = await meow.totalSupply();
 
-    assert.equal(ts.toString(), '0', 'total supply isn\'t right');
+    assert.equal(ts.toString(), '2500000000000000000000', 'total supply isn\'t right');
   });
 
   it('should initializeAccounts correctly', async function () {

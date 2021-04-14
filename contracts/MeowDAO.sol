@@ -28,12 +28,12 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   bool launched;
 
   uint256 public totalStartingSupply;
-  uint256 public operFund;
+  address devWallet;
+  uint devFund;
 
   function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
     __Context_init_unchained();
     initialize(_grumpyAddress, _grumpyFuelTankAddress);
-    _funding_init();
   }
 
   function initialize(address _grumpyAddress, address _grumpyFuelTankAddress) initializer internal{
@@ -41,6 +41,8 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     _symbol = 'Meow';
     _decimals = 14;
     _totalSupply = 0;
+    //TODO: change to real address
+    devWallet = address(this);
 
     _contractStart = block.timestamp;
 
@@ -49,18 +51,19 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     totalStartingSupply = 10**9 * 10**14; //1_000_000_000.00_000_000_000_000 1 billion meowdaos. 10^23
 
+    devFund = (totalStartingSupply/40);
+    _totalSupply += devFund; 
+
     swapEndTime = block.timestamp + (86400 * 5);
     launched = false;
   }
 
-  //only need to be done once.
-  //mints the coin.
-  //adds it to dev fund wallet?
-  //returns an address?
-  function _funding_init() initializer private returns (uint256){
-    operFund = (totalStartingSupply/10000)*500; //0.05, placeholder
-    //_totalSupply += operFund; 
-    //send it to the address(0) do we have a dev wallet ???
+  function retrieveDevFunds() public {
+    require(devFund != 0, "DevFundsClaimed");
+    require(block.timestamp >= _contractStart + (86400 * 356), "Vesting period pending");
+    _balances[devWallet] = _balances[devWallet] + devFund;
+    emit Transfer(address(0), devWallet, devFund);
+    devFund = 0;
   }
 
   function _swapGrumpyInternal(address user, uint256 amount) private {
@@ -97,10 +100,13 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
     IFuelTank(grumpyFuelTankAddress).openNozzle();
 
-    uint256 remainingTokens = totalStartingSupply - _totalSupply;
+    if (totalStartingSupply > _totalSupply) {
+      uint256 remainingTokens = totalStartingSupply - _totalSupply;
 
-    _balances[grumpyFuelTankAddress] = remainingTokens;
-    emit Transfer(address(0), grumpyFuelTankAddress, remainingTokens);
+      _balances[grumpyFuelTankAddress] = _balances[grumpyFuelTankAddress] + remainingTokens;
+
+      emit Transfer(address(0), grumpyFuelTankAddress, remainingTokens);
+    }
 
     launched = true;
   }
