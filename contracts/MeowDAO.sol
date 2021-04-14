@@ -400,6 +400,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     //sent transaction fees to charity Wallet, upto 12 months of contract deployment.
     if (txFee != 0) {
       address charityWallet = getCharityWallet();
+      require(charityWallet != address(0), "charity wallet not initialized");
       _balances[charityWallet] += txFee;
     }
 
