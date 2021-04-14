@@ -201,9 +201,11 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
       address vote = currentVotes[sender];
       if (vote != address(0)) {
         voteCounts[vote] = voteCounts[vote] - voteWeights[sender]; 
+        updateCharityWallet();
       }
       currentlyStaked[sender] = false;
     }
+
   }
 
   function sendFundsToStakedWallet(address wallet, uint256 amount) public {
@@ -364,7 +366,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
 
   function _canStake(address wallet) private view returns (bool) {
     //return _balances[wallet] > _totalSupply/1000;
-    return _balances[wallet] >= 1000000000;
+    return _balances[wallet] >= 10000000000000000; //10_000_000.000_000_000 grumpy units, placeholder
   }
 
   function name() external view returns (string memory) {
