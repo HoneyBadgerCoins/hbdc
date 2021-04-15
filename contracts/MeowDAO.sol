@@ -31,6 +31,22 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   address devWallet;
   uint devFund;
 
+  mapping (address => uint256) private _balances;
+  mapping (address => mapping (address => uint256)) private _allowances;
+
+  mapping (address => uint) public periodStart;
+  mapping (address => bool) public currentlyStaked;
+  mapping (address => bool) public currentlyLocked;
+  mapping (address => address) public currentVotes;
+  mapping (address => uint256) voteWeights;
+
+  mapping(address => uint256) private voteCounts;
+  //TODO: needs initialization
+  address[] private voteIterator;
+  mapping(address => bool) walletWasVotedFor;
+  //TODO: needs initialization
+  address currentCharityWallet;
+
   function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
     __Context_init_unchained();
     initialize(_grumpyAddress, _grumpyFuelTankAddress);
@@ -115,26 +131,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     return block.timestamp;
   }
 
-  mapping (address => uint256) private _balances;
-  mapping (address => mapping (address => uint256)) private _allowances;
-
-  //these track the original staking state for planned yielding rewards
-  mapping (address => uint) public stakeStart;
-  mapping (address => uint) public originalStakeBalance;
-
-  mapping (address => uint) public periodStart;
-  mapping (address => bool) currentlyStaked;
-  mapping (address => bool) public currentlyLocked;
-  mapping (address => address) currentVotes;
-  mapping (address => uint256) voteWeights;
-
-  mapping(address => uint256) private voteCounts;
-  //TODO: needs initialization
-  address[] private voteIterator;
-  mapping(address => bool) walletWasVotedFor;
-  //TODO: needs initialization
-  address currentCharityWallet;
-
   function getCharityWallet() public view returns (address) {
     return currentCharityWallet;
   }
@@ -161,9 +157,6 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
     currentVotes[sender] = address(0);
     periodStart[sender] = block.timestamp;
 
-    stakeStart[sender] = block.timestamp;
-    originalStakeBalance[sender] = _balances[sender];
-
     return true;
   }
 
@@ -187,6 +180,11 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
       }
 
       currentlyStaked[sender] = false;
+
+      periodStart[sender] = 0;
+      currentlyLocked[sender] = false;
+      currentVotes[sender] = address(0);
+      voteWeights[sender] = 0;
     }
   } 
 
