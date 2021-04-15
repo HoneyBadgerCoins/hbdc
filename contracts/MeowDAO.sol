@@ -36,6 +36,16 @@ contract MeowDAO is IERC20, Context {
   mapping (address => address) public currentVotes;
   mapping (address => uint256) voteWeights;
 
+  mapping (address => uint256) public stakingCoordinatesTime;
+  mapping (address => uint256) public stakingCoordinatesAmount;
+
+  function getStakeStartTime(address user) external returns (uint256) {
+    return stakingCoordinatesTime[user];
+  }
+  function getStakeStartAmount(address user) external returns (uint256) {
+    return stakingCoordinatesAmount[user];
+  }
+
   mapping(address => uint256) private voteCounts;
   //TODO: needs initialization
   address[] private voteIterator;
@@ -146,6 +156,9 @@ contract MeowDAO is IERC20, Context {
     currentVotes[sender] = address(0);
     periodStart[sender] = block.timestamp;
 
+    stakingCoordinatesTime[sender] = block.timestamp;
+    stakingCoordinatesAmount[sender] = _balances[sender];
+
     return true;
   }
 
@@ -174,6 +187,9 @@ contract MeowDAO is IERC20, Context {
       currentlyLocked[sender] = false;
       currentVotes[sender] = address(0);
       voteWeights[sender] = 0;
+
+      stakingCoordinatesTime[sender] = 0;
+      stakingCoordinatesAmount[sender] = 0;
     }
   } 
 
