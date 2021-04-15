@@ -124,6 +124,18 @@ contract('MeowDAO', accounts => {
     });
   });
 
+  it("Dev wallet should not be claimable for one year", async function() {
+    await expectRevert(meow.retrieveDevFunds(), "Vesting period pending");
+    await time.increase(86400 * 366);
+    await meow.retrieveDevFunds();
+
+    const devWallet = await meow.devWallet();
+    const devBalance = await meow.balanceOf(devWallet);
+    expect(devBalance.toString()).to.equal('2500000000000000000000');
+
+    await expectRevert(meow.retrieveDevFunds(), "DevFundsClaimed");
+  });
+
   it('should calculateYield correctly', async function () {
     const secondsInYear = 31556952;
 

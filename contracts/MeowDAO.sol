@@ -24,7 +24,7 @@ contract MeowDAO is IERC20, Context {
   bool launched;
 
   uint256 public totalStartingSupply;
-  address devWallet;
+  address public devWallet;
   uint devFund;
 
   mapping (address => uint256) private _balances;
