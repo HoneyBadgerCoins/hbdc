@@ -25,7 +25,7 @@ contract MeowDAO is IERC20, Context {
 
   uint256 public totalStartingSupply;
   address public devWallet;
-  uint devFund;
+  uint public devFund;
 
   mapping (address => uint256) private _balances;
   mapping (address => mapping (address => uint256)) private _allowances;
@@ -38,13 +38,6 @@ contract MeowDAO is IERC20, Context {
 
   mapping (address => uint256) public stakingCoordinatesTime;
   mapping (address => uint256) public stakingCoordinatesAmount;
-
-  function getStakeStartTime(address user) external returns (uint256) {
-    return stakingCoordinatesTime[user];
-  }
-  function getStakeStartAmount(address user) external returns (uint256) {
-    return stakingCoordinatesAmount[user];
-  }
 
   mapping(address => uint256) private voteCounts;
   //TODO: needs initialization
