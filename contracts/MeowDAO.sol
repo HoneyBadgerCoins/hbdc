@@ -2,18 +2,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+
+import "./interfaces/IERC20.sol";
 import "./FixidityLib.sol";
 import "./interfaces/IFuelTank.sol";
 
-contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
+contract MeowDAO is IERC20, Context {
   using FixidityLib for int256;
-  using AddressUpgradeable for address;
-  using SafeMathUpgradeable for uint256;
 
   uint256 _totalSupply;
   string private _name;
@@ -47,12 +43,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   //TODO: needs initialization
   address currentCharityWallet;
 
-  function __MeowDAO_init(address _grumpyAddress, address _grumpyFuelTankAddress) initializer public {
-    __Context_init_unchained();
-    initialize(_grumpyAddress, _grumpyFuelTankAddress);
-  }
-
-  function initialize(address _grumpyAddress, address _grumpyFuelTankAddress) initializer internal{
+  constructor(address _grumpyAddress, address _grumpyFuelTankAddress) {
     _name = 'MeowDAO';
     _symbol = 'Meow';
     _decimals = 14;
@@ -85,10 +76,8 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   function _swapGrumpyInternal(address user, uint256 amount) private {
     require(block.timestamp < swapEndTime);
     require(!isStaked(user), "cannot swap into staked wallet");
-
-    IERC20Upgradeable grumpy = IERC20Upgradeable(grumpyAddress);
     
-    grumpy.transferFrom(user, grumpyFuelTankAddress, amount);
+    IERC20(grumpyAddress).transferFrom(user, grumpyFuelTankAddress, amount);
     IFuelTank(grumpyFuelTankAddress).addTokens(user, amount);
 
     _balances[user] += amount;
@@ -99,7 +88,7 @@ contract MeowDAO is IERC20Upgradeable, Initializable, ContextUpgradeable {
   }
 
   function swapGrumpy(uint256 amount) public {
-    _swapGrumpyInternal(msg.sender, amount);
+    _swapGrumpyInternal(_msgSender(), amount);
   }
 
   function _swapGrumpyTest(address user, uint256 amount) public {

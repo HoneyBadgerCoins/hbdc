@@ -12,7 +12,6 @@ async function initializeAccounts(grumpy, meow, accounts, accountValues) {
       await grumpy.transfer(accounts[k], accountValues[k]);
     }
 
-    //console.log(accounts[k], meow.address, accountValues[k]);
     await grumpy._approve(accounts[k], meow.address, accountValues[k]);
 
     await meow._swapGrumpyTest(accounts[k], accountValues[k]);
@@ -75,8 +74,7 @@ contract('MeowDAO', accounts => {
     grumpy = await Grumpy.new();
     fuelTank = await FuelTank.new(grumpy.address);
 
-    meow = await MeowDAO.new(grumpy.address, fuelTank.address, {initializer: '__MeowDAO_init'});
-    await meow.__MeowDAO_init(grumpy.address, fuelTank.address);
+    meow = await MeowDAO.new(grumpy.address, fuelTank.address);
 
     await fuelTank.addMeowDAOaddress(meow.address);
   });
@@ -86,10 +84,7 @@ contract('MeowDAO', accounts => {
 
     const totalsSupply = await meow.totalStartingSupply();
     expect(totalsSupply.toString()).to.equal("100000000000000000000000");
-
   });
-
-
 
   it('should initializeCoinThruster correctly', async function () {
     await initializeAccounts(grumpy, meow, accounts, [1000000000, 2000000000]);

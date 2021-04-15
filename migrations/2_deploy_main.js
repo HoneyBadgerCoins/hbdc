@@ -4,8 +4,6 @@ const MeowDAO = artifacts.require('MeowDAO');
 const Grumpy = artifacts.require('Grumpy');
 const FuelTank = artifacts.require('GrumpyFuelTank');
  
-const { deployProxy, upgradeProxy, prepareUpgrade } = require('@openzeppelin/truffle-upgrades');
- 
 module.exports = async function (deployer, network, [defaultAccount]) {
   /*
   if (network.startsWith('rinkeby')) { }
@@ -27,10 +25,7 @@ module.exports = async function (deployer, network, [defaultAccount]) {
 
   await deployer.deploy(FuelTank, grumpyAddress);
 
-  //await deployer.deploy(Grumpy);
-  //await deployProxy(MeowDAO, [Grumpy.address],  { deployer, initializer: '__MeowDAO_init' });
-  await deployProxy(MeowDAO, [grumpyAddress, FuelTank.address],  { deployer, initializer: '__MeowDAO_init' });
-  //await prepareUpgrade(MeowDAO, [grumpyAddress, FuelTank.address],  { deployer, initializer: '__MeowDAO_init' });
+  await deployer.deploy(MeowDAO, grumpyAddress, FuelTank.address);
 
   let ft = await FuelTank.deployed();
   let meow = await MeowDAO.deployed();
