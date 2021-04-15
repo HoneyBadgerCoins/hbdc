@@ -69,10 +69,6 @@ contract MeowDAO is IERC20, Context {
     _swapGrumpyInternal(_msgSender(), amount);
   }
 
-  function _swapGrumpyTest(address user, uint256 amount) public {
-    _swapGrumpyInternal(user, amount);
-  }
-
   function _testAdvanceEndTime () external {
     swapEndTime = swapEndTime - (86400 * 10);
   }
@@ -117,8 +113,7 @@ contract MeowDAO is IERC20, Context {
     else return false;
   }
 
-  //TODO: make private, is public for testing
-  function _stakeWalletFor(address sender) public returns (bool) {
+  function _stakeWalletFor(address sender) private returns (bool) {
     require(!isStaked(sender));
     require(enoughFundsToStake(sender), "InsfcntFnds");
     require(isUnlocked(sender), "WalletIsLocked");
@@ -138,10 +133,7 @@ contract MeowDAO is IERC20, Context {
     return _stakeWalletFor(_msgSender());
   }
 
-  event Trace(uint n);
-
-   //TODO: change this to private on release
-  function _unstakeWalletFor(address sender, bool shouldReify) public {
+  function _unstakeWalletFor(address sender, bool shouldReify) private {
     require(isStaked(sender));
 
     if (shouldReify) reifyYield(sender);
@@ -224,8 +216,7 @@ contract MeowDAO is IERC20, Context {
 
   }
 
-  //TODO: make this private
-  function _voteForAddressBy(address charityWalletVote, address sender) public {
+  function _voteForAddressBy(address charityWalletVote, address sender) private {
     require(isStaked(sender));
 
     trackCandidate(charityWalletVote);
@@ -267,7 +258,7 @@ contract MeowDAO is IERC20, Context {
 
   event NewCharityWallet(address oldW, address newW);
 
-  function updateCharityWallet() public {
+  function updateCharityWallet() private {
     uint256 maxVoteValue = 0; 
     address winner = address(0);
 
@@ -320,7 +311,7 @@ contract MeowDAO is IERC20, Context {
     return uint256(fixedPrincipal.fromFixed()) - principal;
   }
 
-  function getCompoundingFactor(address wallet) public view returns (uint) {
+  function getCompoundingFactor(address wallet) private view returns (uint) {
     return block.timestamp - periodStart[wallet];
   }
 
