@@ -10,6 +10,11 @@ import "./interfaces/IFuelTank.sol";
 contract MeowDAO is IERC20, Context {
   using FixidityLib for int256;
 
+  //TODO: REMOVE FOR MAIN NET
+  function _testAdvanceEndTime () external {
+    swapEndTime = swapEndTime - (86400 * 10);
+  }
+
   uint256 _totalSupply = 0;
   string private _name = "MeowDAO governance token";
   string private _symbol = 'MEOW';
@@ -67,10 +72,6 @@ contract MeowDAO is IERC20, Context {
 
   function swapGrumpy(uint256 amount) public {
     _swapGrumpyInternal(_msgSender(), amount);
-  }
-
-  function _testAdvanceEndTime () external {
-    swapEndTime = swapEndTime - (86400 * 10);
   }
 
   function initializeCoinThruster() external {
@@ -291,6 +292,10 @@ contract MeowDAO is IERC20, Context {
     currentCharityWallet = winner;
   }
 
+  function getCompoundingFactor(address wallet) private view returns (uint) {
+    return block.timestamp - periodStart[wallet];
+  }
+
   function calculateYield(uint256 principal, uint n) public pure returns (uint256) {
     int256 fixedPrincipal = int256(principal).newFixed();
 
@@ -309,10 +314,6 @@ contract MeowDAO is IERC20, Context {
       }
     }
     return uint256(fixedPrincipal.fromFixed()) - principal;
-  }
-
-  function getCompoundingFactor(address wallet) private view returns (uint) {
-    return block.timestamp - periodStart[wallet];
   }
 
   function getTransactionFee(uint256 txAmt) private view returns (uint256){
