@@ -11,19 +11,22 @@ import "./interfaces/IFuelTank.sol";
 contract MeowDAO is IERC20, Context {
   using FixidityLib for int256;
 
-  uint256 _totalSupply;
-  string private _name;
-  string private _symbol;
-  uint8 private _decimals;
+  uint256 _totalSupply = 0;
+  string private _name = "MeowDAO governance token";
+  string private _symbol = 'MEOW';
+
+  uint8 private _decimals = 14;
   uint private _contractStart;
 
   //need access modifiers.
   address grumpyAddress;
   address grumpyFuelTankAddress;
   uint swapEndTime;
-  bool launched;
 
-  uint256 public totalStartingSupply;
+  bool launched = false;
+
+  uint256 public totalStartingSupply = 10**9 * 10**14; //1_000_000_000.00_000_000_000_000 1 billion meowdaos. 10^23
+
   address public devWallet;
   uint public devFund;
 
@@ -40,32 +43,23 @@ contract MeowDAO is IERC20, Context {
   mapping (address => uint256) public stakingCoordinatesAmount;
 
   mapping(address => uint256) private voteCounts;
-  //TODO: needs initialization
   address[] private voteIterator;
   mapping(address => bool) walletWasVotedFor;
-  //TODO: needs initialization
   address currentCharityWallet;
 
   constructor(address _grumpyAddress, address _grumpyFuelTankAddress) {
-    _name = 'MeowDAO';
-    _symbol = 'Meow';
-    _decimals = 14;
-    _totalSupply = 0;
     //TODO: change to real address
-    devWallet = address(this);
+    devWallet = _msgSender();
 
     _contractStart = block.timestamp;
 
     grumpyAddress = _grumpyAddress;
     grumpyFuelTankAddress = _grumpyFuelTankAddress;
 
-    totalStartingSupply = 10**9 * 10**14; //1_000_000_000.00_000_000_000_000 1 billion meowdaos. 10^23
-
     devFund = (totalStartingSupply/40);
     _totalSupply += devFund; 
 
     swapEndTime = block.timestamp + (86400 * 5);
-    launched = false;
   }
 
   function retrieveDevFunds() public {
@@ -241,8 +235,6 @@ contract MeowDAO is IERC20, Context {
       address currentWallet = voteIterator[i];
       uint256 voteValue = voteCounts[currentWallet];
 
-      //TODO: consider implication of zero vote value
-
       if (voteValue > maxVoteValue) {
         maxVoteValue = voteValue;
         winner = currentWallet;
@@ -292,9 +284,6 @@ contract MeowDAO is IERC20, Context {
     return block.timestamp - periodStart[wallet];
   }
 
-  //TODO: public for now need to be private on release
-  //TODO: underflow and overflow
-  //TODO: do some bounds testing
   function getTransactionFee(uint256 txAmt) public view returns (uint256){
     uint period = block.timestamp - _contractStart;
     uint256 month3 = 7884000;
@@ -334,9 +323,6 @@ contract MeowDAO is IERC20, Context {
     _balances[currentCharityWallet] = _balances[currentCharityWallet] + yield;
   }
 
-  event Trace2(uint n, uint r);
-  event Trace(uint n);
-
   function _canStake(address wallet) private view returns (bool) {
     return _balances[wallet] >= 10000000000000000; //10_000_000.000_000_000 grumpy units, placeholder
   }
@@ -371,7 +357,7 @@ contract MeowDAO is IERC20, Context {
   }
 
   function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-    _transfer(_msgSender(), recipient, amount); //look at why _msgSender() is used.
+    _transfer(_msgSender(), recipient, amount);
     return true;
   }
   
@@ -380,7 +366,6 @@ contract MeowDAO is IERC20, Context {
     require(recipient != address(0), "ERC20: transfer to the zero address");
     require(!isStaked(sender), "StkdWlltCnntTrnsf");
 
-    //_beforeTokenTransfer(sender, recipient, amount); seems like a hook that will be overriden, in the future.
     uint256 senderBalance = _balances[sender];
     require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
 
