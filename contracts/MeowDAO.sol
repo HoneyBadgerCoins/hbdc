@@ -199,37 +199,46 @@ contract MeowDAO is IERC20, Context {
   }
 
   function rebuildVotingIterator() public {
-    require(voteIterator.length == 20, "Voting Iterator not full");
+    require(voteIterator.length == 12, "Voting Iterator not full");
 
-    address[20] memory voteCopy;
-    for (uint i = 0; i < 20; i++) {
+    address[12] memory voteCopy;
+    for (uint i = 0; i < 12; i++) {
       voteCopy[i] = voteIterator[i];
     }
 
     //insertion sort copy
-    for (uint i = 1; i < 20; i++)
+    for (uint i = 1; i < 12; i++)
     {
       address keyAddress = voteCopy[i];
       uint key = voteCounts[keyAddress];
 
       uint j = i - 1;
 
-      while ((int(j) >= 0) && voteCounts[voteCopy[j]] > key) {
+      bool broke = false;
+      while (j >= 0 && voteCounts[voteCopy[j]] < key) {
         voteCopy[j + 1] = voteCopy[j];
-        j--;
+
+        if (j == 0) {
+          broke = true;
+          break;
+        }
+        else j--;
       }
-      voteCopy[j + 1] = keyAddress;
+
+      if (broke) voteCopy[0] = keyAddress;
+      else voteCopy[j + 1] = keyAddress;
     }
 
-    for (uint i = 0; i < 10; i++) {
+    for (uint i = 11; i >= 6; i--) {
       address vote = voteCopy[i];
       walletWasVotedFor[vote] = false;
     }
 
     delete voteIterator;
-    for (uint i = 19; i >= 10; i--) {
+    for (uint i = 0; i < 6; i++) {
       voteIterator.push(voteCopy[i]);
     }
+
   }
 
   //TODO: make this private
@@ -239,7 +248,7 @@ contract MeowDAO is IERC20, Context {
 
     // If wallet was never voted for before add it to voteIterator
     if (!walletWasVotedFor[charityWalletVote]) {
-      require(voteIterator.length < 20, "Vote Iterator must be rebuilt");
+      require(voteIterator.length < 12, "Vote Iterator must be rebuilt");
 
       voteIterator.push(charityWalletVote);
       walletWasVotedFor[charityWalletVote] = true;

@@ -118,7 +118,7 @@ contract('MeowDAO', accounts => {
 
           expect(b2.sub(b).toString()).to.equal('720000000');
 
-          expectRevert(fuelTank.reclaimGrumpies(), 'BalanceEmpty');
+          await expectRevert(fuelTank.reclaimGrumpies(), 'BalanceEmpty');
         });
       });
     });
@@ -328,27 +328,21 @@ contract('MeowDAO', accounts => {
 
   context('VoteIterator', async function () {
     const balDiffs = [
-      '1', //0
+      '5', //0
       '2', //1
       '3', //2
       '2', //3
       '5', //4
       '4', //5
-      '7', //6
-      '6', //7
-      '3', //8
-      '2', //9
-      '3', //10
-      '1', //11
+      '13', //6
+      '2', //7
+      '2', //8
+      '1', //9
+      '1', //10
+      '2', //11
       '1', //12
-      '1', //13
+      '7', //13
       '1', //14
-      '2', //15
-      '2', //16
-      '13', //17
-      '2', //18
-      '2', //19
-      '10', //20
     ];
 
     beforeEach(async function () {
@@ -359,15 +353,15 @@ contract('MeowDAO', accounts => {
         meow._stakeWalletFor(accounts[i]);
       }
     });
-    context('20 different addresses voted for', async function () {
+    context('8 different addresses voted for', async function () {
       beforeEach(async function () {
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 12; i++) {
           await meow._voteForAddressBy(accounts[i], accounts[i]);
         };
-        await meow._voteForAddressBy(accounts[11], accounts[20]);
+        await meow._voteForAddressBy(accounts[0], accounts[13]);
       });
       it('should not allow another vote in without a rebuild', async function () {
-        expectRevert(meow._voteForAddressBy(accounts[20], accounts[20]), "Vote Iterator must be rebuilt");
+        await expectRevert(meow._voteForAddressBy(accounts[14], accounts[14]), "Vote Iterator must be rebuilt");
       });
       context('Iterator is rebuilt', async function () {
         beforeEach(async function () {
@@ -375,21 +369,21 @@ contract('MeowDAO', accounts => {
         });
         it('should have the right length', async function () {
           const itLength = await meow.voteIteratorLength();
-          expect(itLength.toString()).to.equal('10');
+          expect(itLength.toString()).to.equal('6');
         });
         it('should have sorted them by vote strength', async function () {
           const first = await meow.voteIterator(0);
-          expect(first).to.equal(accounts[17]);
+          expect(first).to.equal(accounts[6]);
           const second = await meow.voteIterator(1);
-          expect(second).to.equal(accounts[11]);
+          expect(second).to.equal(accounts[0]);
         });
         it('should allow a cut off candidate have their current weight handled correctly as an iterated candidate if it is revoted for', async function () {
-          await meow._voteForAddressBy(accounts[13], accounts[12]);
+          await meow._voteForAddressBy(accounts[9], accounts[6]);
 
-          const weight = await meow.voteCounts(accounts[13]);
-          const candidate = await meow.voteIterator(10);
-          expect(weight.toString()).to.equal('20000000000000000')
-          expect(candidate).to.equal(accounts[13]);
+          const weight = await meow.voteCounts(accounts[9]);
+          const candidate = await meow.voteIterator(6);
+          expect(weight.toString()).to.equal('140000000000000000')
+          expect(candidate).to.equal(accounts[9]);
         });
       });
     });
