@@ -345,7 +345,7 @@ contract MeowDAO is IERC20, Context {
     return block.timestamp - periodStart[wallet];
   }
 
-  function getTransactionFee(uint256 txAmt) public view returns (uint256){
+  function getTransactionFee(uint256 txAmt) private view returns (uint256){
     uint period = block.timestamp - _contractStart;
 
     if (period > 31536000) return 0;
