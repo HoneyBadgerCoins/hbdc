@@ -276,7 +276,7 @@ contract('MeowDAO', accounts => {
     expect(await meow.getCharityWallet()).to.equal(accounts[6]);
   });
 
-  it.only('should handle address0 in votes correctly', async function () {
+  it('should handle address0 in votes correctly', async function () {
     await initializeAccounts(grumpy, meow, accounts,
       [B('10000000000000000'),
        B('20000000000000000'),

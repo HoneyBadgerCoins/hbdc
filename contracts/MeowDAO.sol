@@ -166,20 +166,13 @@ contract MeowDAO is IERC20, Context {
 
       if (voteWeights[sender] != 0) {
         removeVoteWeight(sender);
-
-        currentVotes[sender] = address(0);
-        voteWeights[sender] = 0;
-
         updateCharityWallet();
-      }
-      else {
-        currentVotes[sender] = address(0);
-        voteWeights[sender] = 0;
       }
 
       currentlyStaked[sender] = false;
       currentlyLocked[sender] = false;
-
+      currentVotes[sender] = address(0);
+      voteWeights[sender] = 0;
       periodStart[sender] = 0;
 
       stakingCoordinatesTime[sender] = 0;
