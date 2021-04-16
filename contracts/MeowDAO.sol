@@ -37,14 +37,14 @@ contract MeowDAO is IERC20, Context {
   mapping (address => bool) public currentlyStaked;
   mapping (address => bool) public currentlyLocked;
   mapping (address => address) public currentVotes;
-  mapping (address => uint256) voteWeights;
+  mapping (address => uint256) public voteWeights;
 
   mapping (address => uint256) public stakingCoordinatesTime;
   mapping (address => uint256) public stakingCoordinatesAmount;
 
-  mapping(address => uint256) private voteCounts;
-  address[] private voteIterator;
-  mapping(address => bool) walletWasVotedFor;
+  mapping(address => uint256) public voteCounts;
+  address[] public voteIterator;
+  mapping(address => bool) public walletWasVotedFor;
   address currentCharityWallet;
 
   constructor(address _grumpyAddress, address _grumpyFuelTankAddress) {
@@ -194,8 +194,46 @@ contract MeowDAO is IERC20, Context {
     _transfer(_msgSender(), wallet, amount); 
   } 
 
+  function voteIteratorLength() external view returns (uint) {
+    return voteIterator.length;
+  }
+
+  function rebuildVotingIterator() public {
+    require(voteIterator.length == 20, "Voting Iterator not full");
+
+    address[20] memory voteCopy;
+    for (uint i = 0; i < 20; i++) {
+      voteCopy[i] = voteIterator[i];
+    }
+
+    //insertion sort copy
+    for (uint i = 1; i < 20; i++)
+    {
+      address keyAddress = voteCopy[i];
+      uint key = voteCounts[keyAddress];
+
+      uint j = i - 1;
+
+      while ((int(j) >= 0) && voteCounts[voteCopy[j]] > key) {
+        voteCopy[j + 1] = voteCopy[j];
+        j--;
+      }
+      voteCopy[j + 1] = keyAddress;
+    }
+
+    for (uint i = 0; i < 10; i++) {
+      address vote = voteCopy[i];
+      walletWasVotedFor[vote] = false;
+    }
+
+    delete voteIterator;
+    for (uint i = 19; i >= 10; i--) {
+      voteIterator.push(voteCopy[i]);
+    }
+  }
+
   //TODO: make this private
-  function _voteForAddressBy(address charityWallet, address sender) public {
+  function _voteForAddressBy(address charityWalletVote, address sender) public {
 
     require(isStaked(sender));
     require(isUnlocked(sender));
@@ -209,20 +247,22 @@ contract MeowDAO is IERC20, Context {
     voteWeights[sender] = newVoteWeight;
 
     // If wallet was never voted for before add it to voteIterator
-    if (!walletWasVotedFor[charityWallet]) {
-      voteIterator.push(charityWallet);
-      walletWasVotedFor[charityWallet] = true;
+    if (!walletWasVotedFor[charityWalletVote]) {
+      require(voteIterator.length < 20, "Vote Iterator must be rebuilt");
+
+      voteIterator.push(charityWalletVote);
+      walletWasVotedFor[charityWalletVote] = true;
     }
 
-    voteCounts[charityWallet] = voteCounts[charityWallet] + newVoteWeight;
+    voteCounts[charityWalletVote] = voteCounts[charityWalletVote] + newVoteWeight;
 
-    currentVotes[sender] = charityWallet;
+    currentVotes[sender] = charityWalletVote;
 
     updateCharityWallet();
   }
 
-  function voteForAddress(address charityWallet) public {
-    _voteForAddressBy(charityWallet, _msgSender());
+  function voteForAddress(address charityWalletVote) public {
+    _voteForAddressBy(charityWalletVote, _msgSender());
   }
 
   event NewCharityWallet(address oldW, address newW);

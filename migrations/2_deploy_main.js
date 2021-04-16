@@ -14,7 +14,7 @@ module.exports = async function (deployer, network, [defaultAccount]) {
   let grumpyAddress;
   let g;
 
-  if (network.startsWith('test')) {
+  if (network.startsWith('test') || network.startsWith('dev')) {
     g = await deployer.deploy(Grumpy);
     grumpyAddress = Grumpy.address;
   }
@@ -32,6 +32,7 @@ module.exports = async function (deployer, network, [defaultAccount]) {
 
   await ft.addMeowDAOaddress(MeowDAO.address);
 
+  /*
   if (!network.startsWith('test')) {
     await g.approve(meow.address, '10000000000000000000');
     await meow.swapGrumpy('10000000000000000000');
@@ -39,4 +40,5 @@ module.exports = async function (deployer, network, [defaultAccount]) {
     await meow._testAdvanceEndTime();
     await meow.initializeCoinThruster();
   }
+  */
 };

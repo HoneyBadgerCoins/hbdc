@@ -276,6 +276,75 @@ contract('MeowDAO', accounts => {
     expect(await meow.getCharityWallet()).to.equal(accounts[6]);
   });
 
+  context('VoteIterator', async function () {
+    const balDiffs = [
+      '1', //0
+      '2', //1
+      '3', //2
+      '2', //3
+      '5', //4
+      '4', //5
+      '7', //6
+      '6', //7
+      '3', //8
+      '2', //9
+      '3', //10
+      '1', //11
+      '1', //12
+      '1', //13
+      '1', //14
+      '2', //15
+      '2', //16
+      '13', //17
+      '2', //18
+      '2', //19
+      '10', //20
+    ];
+
+    beforeEach(async function () {
+      await initializeAccounts(grumpy, meow, accounts, balDiffs.map(s => B(s + '0000000000000000')));
+    });
+    beforeEach(async function () {
+      for (let i = 0; i < balDiffs.length; i++) {
+        meow._stakeWalletFor(accounts[i]);
+      }
+    });
+    context('20 different addresses voted for', async function () {
+      beforeEach(async function () {
+        for (let i = 0; i < 20; i++) {
+          await meow._voteForAddressBy(accounts[i], accounts[i]);
+        };
+        await meow._voteForAddressBy(accounts[11], accounts[20]);
+      });
+      it('should not allow another vote in without a rebuild', async function () {
+        expectRevert(meow._voteForAddressBy(accounts[20], accounts[20]), "Vote Iterator must be rebuilt");
+      });
+      context('Iterator is rebuilt', async function () {
+        beforeEach(async function () {
+          await meow.rebuildVotingIterator();
+        });
+        it('should have the right length', async function () {
+          const itLength = await meow.voteIteratorLength();
+          expect(itLength.toString()).to.equal('10');
+        });
+        it('should have sorted them by vote strength', async function () {
+          const first = await meow.voteIterator(0);
+          expect(first).to.equal(accounts[17]);
+          const second = await meow.voteIterator(1);
+          expect(second).to.equal(accounts[11]);
+        });
+        it('should allow a cut off candidate have their current weight handled correctly as an iterated candidate if it is revoted for', async function () {
+          await meow._voteForAddressBy(accounts[13], accounts[12]);
+
+          const weight = await meow.voteCounts(accounts[13]);
+          const candidate = await meow.voteIterator(10);
+          expect(weight.toString()).to.equal('20000000000000000')
+          expect(candidate).to.equal(accounts[13]);
+        });
+      });
+    });
+  });
+
   //TODO: should allow a user to update their vote weight by revoting for the same address
   it('should not allow staked wallets to send or receive funds', async function() {
     await initializeAccounts(grumpy, meow, accounts, [B('10000000000000000')]);
