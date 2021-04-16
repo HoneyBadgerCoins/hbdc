@@ -276,6 +276,56 @@ contract('MeowDAO', accounts => {
     expect(await meow.getCharityWallet()).to.equal(accounts[6]);
   });
 
+  it.only('should handle address0 in votes correctly', async function () {
+    await initializeAccounts(grumpy, meow, accounts,
+      [B('10000000000000000'),
+       B('20000000000000000'),
+       B('15000000000000000')]);
+    await meow._stakeWalletFor(accounts[0]);
+    await meow._stakeWalletFor(accounts[1]);
+    await meow._stakeWalletFor(accounts[2]);
+
+    await meow.voteForAddress(accounts[6]);
+    await meow._voteForAddressBy(accounts[5], accounts[1]);
+    await meow.voteForAddress(address0);
+    await meow._voteForAddressBy(address0, accounts[2]);
+
+    await increaseTime(31556952);
+
+    await meow.reifyYield(accounts[0]);
+    await meow.reifyYield(accounts[1]);
+    await meow.reifyYield(accounts[2]);
+
+    await meow.unstakeWallet();
+
+    await increaseTime(31556952);
+
+    await meow.unstakeWallet();
+
+    await meow.reifyYield(accounts[2]);
+
+    await meow._unstakeWalletFor(accounts[1], true);
+    await meow._unstakeWalletFor(accounts[2], true);
+
+    await increaseTime(31556952);
+    
+    await meow._unstakeWalletFor(accounts[2], true);
+
+    await meow.transfer(accounts[2], 2012);
+
+    const results = await Promise.all([
+      meow.voteIterator([0]),
+      meow.voteIterator([1]),
+      meow.voteIterator([2]),
+      meow.voteWeights(address0),
+      meow.voteWeights(accounts[6]),
+      meow.voteWeights(accounts[5]),
+    ]);
+
+    expect(results[4].toString()).to.equal('0');
+    expect(results[5].toString()).to.equal('0');
+  });
+
   context('VoteIterator', async function () {
     const balDiffs = [
       '1', //0

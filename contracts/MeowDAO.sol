@@ -153,6 +153,8 @@ contract MeowDAO is IERC20, Context {
     return _stakeWalletFor(_msgSender());
   }
 
+  event Trace(uint n);
+
    //TODO: change this to private on release
   function _unstakeWalletFor(address sender, bool shouldReify) public {
     require(isStaked(sender));
@@ -162,18 +164,23 @@ contract MeowDAO is IERC20, Context {
     } else {
       if (shouldReify) reifyYield(sender);
 
-      address vote = currentVotes[sender];
       if (voteWeights[sender] != 0) {
-        voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
+        removeVoteWeight(sender);
+
+        currentVotes[sender] = address(0);
+        voteWeights[sender] = 0;
+
         updateCharityWallet();
+      }
+      else {
+        currentVotes[sender] = address(0);
+        voteWeights[sender] = 0;
       }
 
       currentlyStaked[sender] = false;
+      currentlyLocked[sender] = false;
 
       periodStart[sender] = 0;
-      currentlyLocked[sender] = false;
-      currentVotes[sender] = address(0);
-      voteWeights[sender] = 0;
 
       stakingCoordinatesTime[sender] = 0;
       stakingCoordinatesAmount[sender] = 0;
@@ -234,15 +241,8 @@ contract MeowDAO is IERC20, Context {
 
   //TODO: make this private
   function _voteForAddressBy(address charityWalletVote, address sender) public {
-
     require(isStaked(sender));
     require(isUnlocked(sender));
-
-    address vote = currentVotes[sender];
-    voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
-
-    uint256 newVoteWeight = _balances[sender];
-    voteWeights[sender] = newVoteWeight;
 
     // If wallet was never voted for before add it to voteIterator
     if (!walletWasVotedFor[charityWalletVote]) {
@@ -252,11 +252,25 @@ contract MeowDAO is IERC20, Context {
       walletWasVotedFor[charityWalletVote] = true;
     }
 
-    voteCounts[charityWalletVote] = voteCounts[charityWalletVote] + newVoteWeight;
-
-    currentVotes[sender] = charityWalletVote;
-
+    removeVoteWeight(sender);
+    setVoteWeight(sender);
+    addVoteWeight(sender, charityWalletVote);
     updateCharityWallet();
+  }
+
+  function removeVoteWeight(address sender) private {
+    address vote = currentVotes[sender];
+    voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
+  }
+
+  function setVoteWeight(address sender) internal {
+    uint256 newVoteWeight = _balances[sender];
+    voteWeights[sender] = newVoteWeight;
+  }
+
+  function addVoteWeight(address sender, address charityWalletVote) internal {
+    voteCounts[charityWalletVote] = voteCounts[charityWalletVote] + voteWeights[sender];
+    currentVotes[sender] = charityWalletVote;
   }
 
   function voteForAddress(address charityWalletVote) public {
@@ -345,7 +359,8 @@ contract MeowDAO is IERC20, Context {
   function reifyYield(address wallet) public {
     if (currentCharityWallet == wallet) return;
     require(isStaked(wallet), 'MstBeStkd');
-    require(isUnlocked(wallet));
+
+    if (!isUnlocked(wallet)) return;
 
     uint compoundingFactor = getCompoundingFactor(wallet);
 
@@ -353,7 +368,7 @@ contract MeowDAO is IERC20, Context {
 
     uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
 
-    _balances[wallet] = _balances[wallet] +  yield;
+    _balances[wallet] = _balances[wallet] + yield;
     _totalSupply = _totalSupply + yield;
 
     if (currentCharityWallet != address(0)) {
