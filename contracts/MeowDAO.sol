@@ -105,6 +105,7 @@ contract MeowDAO is IERC20, Context {
       uint256 remainingTokens = totalStartingSupply - _totalSupply;
 
       _balances[grumpyFuelTankAddress] = _balances[grumpyFuelTankAddress] + remainingTokens;
+      _totalSupply += remainingTokens;
 
       emit Transfer(address(0), grumpyFuelTankAddress, remainingTokens);
     }
