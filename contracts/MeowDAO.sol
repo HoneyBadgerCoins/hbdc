@@ -163,7 +163,7 @@ contract MeowDAO is IERC20, Context {
       if (shouldReify) reifyYield(sender);
 
       address vote = currentVotes[sender];
-      if (vote != address(0)) {
+      if (voteWeights[sender] != 0) {
         voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
         updateCharityWallet();
       }
@@ -239,9 +239,7 @@ contract MeowDAO is IERC20, Context {
     require(isUnlocked(sender));
 
     address vote = currentVotes[sender];
-    if (vote != address(0)) {
-      voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
-    }
+    voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
 
     uint256 newVoteWeight = _balances[sender];
     voteWeights[sender] = newVoteWeight;
@@ -286,13 +284,13 @@ contract MeowDAO is IERC20, Context {
     emit NewCharityWallet(currentCharityWallet, winner);
 
     //if old winner was staked
-    if (currentCharityWallet != address(0) && currentlyStaked[currentCharityWallet]) {
+    if (currentlyStaked[currentCharityWallet]) {
       //reset their yield period start to the present so they can't double dip
       periodStart[currentCharityWallet] = block.timestamp;
     }
 
     //if new charrity address is staked
-    if (winner != address(0) && currentlyStaked[winner]) {
+    if (currentlyStaked[winner]) {
       //reify the new wallet before they become the currentCharityWallet
       reifyYield(winner);
     }
@@ -355,12 +353,15 @@ contract MeowDAO is IERC20, Context {
 
     uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
 
-    _totalSupply = _totalSupply + (yield * 2);
+    _balances[wallet] = _balances[wallet] +  yield;
+    _totalSupply = _totalSupply + yield;
+
+    if (currentCharityWallet != address(0)) {
+      _totalSupply = _totalSupply + yield;
+      _balances[currentCharityWallet] = _balances[currentCharityWallet] + yield;
+    }
 
     periodStart[wallet] = block.timestamp;
-
-    _balances[wallet] = _balances[wallet] +  yield;
-    _balances[currentCharityWallet] = _balances[currentCharityWallet] + yield;
   }
 
   function _canStake(address wallet) private view returns (bool) {
