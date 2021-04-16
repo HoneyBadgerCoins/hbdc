@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.0;
 /**
  * @title FixidityLib
  * @author Gadi Guy, Alberto Cuesta Canada
