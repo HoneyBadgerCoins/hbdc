@@ -300,16 +300,12 @@ contract('MeowDAO', accounts => {
 
     await increaseTime(31556952);
 
-    await meow.unstakeWallet();
-
     await meow.reifyYield(accounts[2]);
 
     await meow._unstakeWalletFor(accounts[1], true);
     await meow._unstakeWalletFor(accounts[2], true);
 
     await increaseTime(31556952);
-    
-    await meow._unstakeWalletFor(accounts[2], true);
 
     await meow.transfer(accounts[2], 2012);
 
@@ -407,13 +403,15 @@ contract('MeowDAO', accounts => {
     expect(transfer.toString()).to.equal("10000050000000000");
   });
 
-  //TODO: ensure the locking mechanism works for unstaking
-  it("locking should work with unstaking", async function (){
-    await initializeAccounts(grumpy, meow, accounts, [B('10000000000000000'), B('10000000000000000')]);
-    await meow._stakeWalletFor(accounts[1]);
-    await meow._unstakeWalletFor(accounts[1], true);
-    let val = await meow.currentlyLocked(accounts[1]);    
-    expect(val.toString()).to.equal("true");
+  it("locking should work", async function (){
+    await initializeAccounts(grumpy, meow, accounts, [B('20000000000000000'), B('10000000000000000')]);
+    await meow.stakeWallet();
+    await meow.unstakeWallet();
+    await expectRevert(meow.transfer(accounts[1], 20000), "LockedWlltCnntTrnsfr");
+    await expectRevert(meow.stakeWallet(), "WalletIsLocked");
+    await time.increase(86400 * 6);
+    await meow.transfer(accounts[1], 20000)
+    await meow.stakeWallet()
   });
 
   context('Pausing Staking', async function () {
@@ -433,7 +431,6 @@ contract('MeowDAO', accounts => {
         await meow.unstakeWallet();
       });
       it('should not get any more yield', async function () {
-        await meow.reifyYield(accounts[0]);
         const b = await meow.balanceOf(accounts[0]);
         expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
       });
