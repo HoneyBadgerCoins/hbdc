@@ -16,11 +16,11 @@ contract GrumpyFuelTank is Context, Ownable, IFuelTank {
   address public grumpyAddress;
   address public meowDAOAddress;
 
-  mapping (address => uint) reclaimableBalances;
+  mapping (address => uint) public reclaimableBalances;
   uint public liquidityBalance;
 
-  uint reclaimGuaranteeTime;
-  uint reclaimStartTime;
+  uint public reclaimGuaranteeTime;
+  uint public reclaimStartTime;
 
   constructor (address _grumpyAddress) {
     grumpyAddress = _grumpyAddress;
@@ -32,7 +32,7 @@ contract GrumpyFuelTank is Context, Ownable, IFuelTank {
     meowDAOAddress = _meowDAOAddress;
   }
 
-  bool nozzleOpen = false;
+  bool public nozzleOpen = false;
   function openNozzle() external override {
     require(meowDAOAddress != address(0), "MeowDAONotInitialized");
     require(msg.sender == meowDAOAddress, "MustBeMeowDao");

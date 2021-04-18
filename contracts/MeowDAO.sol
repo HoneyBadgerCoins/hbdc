@@ -14,7 +14,7 @@ contract MeowDAO is IERC20, Context {
   string private _name = "MeowDAO governance token";
   string private _symbol = 'MEOW';
 
-  uint8 private _decimals = 14;
+  uint8 private _decimals = 13;
   uint private _contractStart;
 
   //need access modifiers.
