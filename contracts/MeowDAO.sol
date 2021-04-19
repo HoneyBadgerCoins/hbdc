@@ -375,7 +375,7 @@ contract MeowDAO is IERC20, Context {
     _balances[wallet] = _balances[wallet] + yield;
 
     if (currentCharityWallet != address(0)) {
-      uint256 charityYield = yield / 2;
+      uint256 charityYield = (yield / 7) * 3;
       _balances[currentCharityWallet] = _balances[currentCharityWallet] + charityYield;
       _totalSupply = _totalSupply + yield + charityYield;
     } else {
