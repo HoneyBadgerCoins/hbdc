@@ -202,6 +202,13 @@ contract MeowDAO is IERC20, Context {
     return voteIterator.length;
   }
 
+  function voteWithRebuildIfNecessary(address charityWalletVote) public {
+    if (voteIterator.length == 12 && !walletWasVotedFor[charityWalletVote]) {
+      rebuildVotingIterator();
+    }
+    _voteForAddressBy(charityWalletVote, _msgSender());
+  }
+
   function rebuildVotingIterator() public {
     require(voteIterator.length == 12, "Voting Iterator not full");
 
