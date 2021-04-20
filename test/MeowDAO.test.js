@@ -346,7 +346,7 @@ contract('MeowDAO', accounts => {
     });
     beforeEach(async function () {
       for (let i = 0; i < balDiffs.length; i++) {
-        meow._stakeWalletFor(accounts[i]);
+        await meow._stakeWalletFor(accounts[i]);
       }
     });
     context('8 different addresses voted for', async function () {
@@ -384,6 +384,37 @@ contract('MeowDAO', accounts => {
       });
     });
   });
+  context('VoteIterator stress test', async function () {
+    const balDiffs = [
+      '1', //0
+      '2', //1
+      '3', //2
+      '4', //3
+      '5', //4
+      '6', //5
+      '7', //6
+      '8', //7
+      '9', //8
+      '10', //9
+      '11', //10
+      '12', //11
+    ];
+
+    beforeEach(async function () {
+      await initializeAccounts(grumpy, meow, accounts, balDiffs.map(s => B(s + '0000000000000000')));
+      for (let i = 0; i < 12; i++) {
+        await meow._stakeWalletFor(accounts[i]);
+      }
+      for (let i = 0; i < 12; i++) {
+        await meow._voteForAddressBy(accounts[i], accounts[i]);
+      };
+    });
+    
+    it('should not reach the gas limit by sorting the worse case list', async function () {
+      const tx = await meow.rebuildVotingIterator();
+      console.log(tx);
+    });
+  })
 
   //TODO: should allow a user to update their vote weight by revoting for the same address
   it('should not allow staked wallets to send or receive funds', async function() {
