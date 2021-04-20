@@ -26,9 +26,6 @@ contract MeowDAO is IERC20, Context {
 
   uint256 public totalStartingSupply = 10**9 * 10**14; //1_000_000_000.00_000_000_000_000 1 billion meowdaos. 10^23
 
-  address public devWallet;
-  uint public devFund;
-
   mapping (address => uint256) private _balances;
   mapping (address => mapping (address => uint256)) private _allowances;
 
@@ -47,26 +44,12 @@ contract MeowDAO is IERC20, Context {
   address currentCharityWallet;
 
   constructor(address _grumpyAddress, address _grumpyFuelTankAddress) {
-    //TODO: change to real address
-    devWallet = _msgSender();
-
     _contractStart = block.timestamp;
 
     grumpyAddress = _grumpyAddress;
     grumpyFuelTankAddress = _grumpyFuelTankAddress;
 
-    devFund = (totalStartingSupply/40);
-    _totalSupply += devFund; 
-
     swapEndTime = block.timestamp + (86400 * 5);
-  }
-
-  function retrieveDevFunds() public {
-    require(devFund != 0, "DevFundsClaimed");
-    require(block.timestamp >= _contractStart + (86400 * 356), "Vesting period pending");
-    _balances[devWallet] = _balances[devWallet] + devFund;
-    emit Transfer(address(0), devWallet, devFund);
-    devFund = 0;
   }
 
   function _swapGrumpyInternal(address user, uint256 amount) private {
