@@ -397,7 +397,7 @@ contract MeowDAO is IERC20, Context {
 
   function transferToStakedWallet(address recipient, uint256 amount) public {
     reifyYield(recipient);
-    _transfer(_msgSender(), recipient, amount, true); 
+    _transfer(_msgSender(), recipient, amount, true);
   } 
 
   function _transfer(address sender, address recipient, uint256 amount, bool canBeStaked) internal virtual {
