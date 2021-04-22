@@ -124,18 +124,6 @@ contract('MeowDAO', accounts => {
     });
   });
 
-  it("Dev wallet should not be claimable for one year", async function() {
-    await expectRevert(meow.retrieveDevFunds(), "Vesting period pending");
-    await time.increase(86400 * 366);
-    await meow.retrieveDevFunds();
-
-    const devWallet = await meow.devWallet();
-    const devBalance = await meow.balanceOf(devWallet);
-    expect(devBalance.toString()).to.equal('2500000000000000000000');
-
-    await expectRevert(meow.retrieveDevFunds(), "DevFundsClaimed");
-  });
-
   it('should calculateYield correctly', async function () {
     const secondsInYear = 31556952;
 
@@ -153,7 +141,7 @@ contract('MeowDAO', accounts => {
   it('should initialize supply by default', async function () {
     var ts = await meow.totalSupply();
 
-    assert.equal(ts.toString(), '2500000000000000000000', 'total supply isn\'t right');
+    assert.equal(ts.toString(), '0', 'total supply isn\'t right');
   });
 
   it('should initializeAccounts correctly', async function () {
@@ -182,7 +170,7 @@ contract('MeowDAO', accounts => {
     await meow.unstakeWallet();
 
     let charityWallet = await meow.balanceOf(accounts[4]);
-    expect(charityWallet.toString()).to.satisfy(priceRange('699999980000000', '700000030000000'));
+    expect(charityWallet.toString()).to.satisfy(priceRange('299999980000000', '300000030000000'));
   });
 
   context('TX fee', async function () {
@@ -592,16 +580,11 @@ contract('MeowDAO', accounts => {
 
           it("should receives the yield from the deciding vote", async function () {
             const b = await meow.balanceOf(accounts[0]);
-            expect(b.toString()).to.satisfy(priceRange('11399800000000000', '11400900000000000'));
+            expect(b.toString()).to.satisfy(priceRange('11000000000000000', '11100900000000000'));
           });
         });
       });
     });
 
   });
-
-  //TODO: handle account(0) as the charity wallet safely
-  //        voting
-  //        reification
-  //        transaction
 });
