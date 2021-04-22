@@ -40,7 +40,7 @@ contract MeowDAO is IERC20, Context {
   mapping(address => uint256) public voteCounts;
   address[] public voteIterator;
   mapping(address => bool) public walletWasVotedFor;
-  address currentCharityWallet;
+  address public currentCharityWallet;
 
   constructor(address _grumpyAddress, address _grumpyFuelTankAddress) {
     _contractStart = block.timestamp;
@@ -97,10 +97,6 @@ contract MeowDAO is IERC20, Context {
 
   function getBlockTime() public view returns (uint) {
     return block.timestamp;
-  }
-
-  function getCharityWallet() public view returns (address) {
-    return currentCharityWallet;
   }
 
   function isStaked(address wallet) public view returns (bool) {
@@ -295,7 +291,7 @@ contract MeowDAO is IERC20, Context {
       periodStart[currentCharityWallet] = block.timestamp;
     }
 
-    //if new charrity address is staked
+    //if new charity address is staked
     if (currentlyStaked[winner]) {
       //reify the new wallet before they become the currentCharityWallet
       reifyYield(winner);
@@ -388,7 +384,7 @@ contract MeowDAO is IERC20, Context {
   function balanceOf(address account) public view virtual override returns (uint256) {
     uint b = _balances[account];
 
-    if (isStaked(account) && getCharityWallet() != account) {
+    if (isStaked(account) && currentCharityWallet != account) {
       return b + calculateYield(b, getCompoundingFactor(account));
     }
     return b;
@@ -416,13 +412,12 @@ contract MeowDAO is IERC20, Context {
 
     uint sentAmount = amount; 
 
-    address charityWallet = getCharityWallet();
-    if (charityWallet != address(0)) {
+    if (currentCharityWallet != address(0)) {
       uint256 txFee = getTransactionFee(amount);
 
       if (txFee != 0) {
         sentAmount -= txFee;
-        _balances[charityWallet] += txFee;
+        _balances[currentCharityWallet] += txFee;
       }
     }
 
