@@ -17,11 +17,11 @@ contract MeowDAO is IERC20, Context {
   uint8 private _decimals = 13;
   uint private _contractStart;
 
-  address grumpyAddress;
-  address grumpyFuelTankAddress;
-  uint swapEndTime;
+  address public grumpyAddress;
+  address public grumpyFuelTankAddress;
+  uint public swapEndTime;
 
-  bool launched = false;
+  bool public launched = false;
 
   uint256 public totalStartingSupply = 10**10 * 10**13; //10_000_000_000.0_000_000_000_000 10 billion MEOWS. 10^23
 
