@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./GrumpyCoin.sol";
 import "./interfaces/IUniswapV2Router02.sol";
+import "./interfaces/IFuelTank.sol";
+import "./interfaces/IERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/IERC20.sol";
-import "./interfaces/IFuelTank.sol";
 
 
 contract GrumpyFuelTank is Context, Ownable, IFuelTank {

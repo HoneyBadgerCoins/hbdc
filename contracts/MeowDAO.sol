@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Context.sol";
-
 import "./interfaces/IERC20.sol";
+
 import "./FixidityLib.sol";
 import "./interfaces/IFuelTank.sol";
 
@@ -17,14 +17,13 @@ contract MeowDAO is IERC20, Context {
   uint8 private _decimals = 13;
   uint private _contractStart;
 
-  //need access modifiers.
   address grumpyAddress;
   address grumpyFuelTankAddress;
   uint swapEndTime;
 
   bool launched = false;
 
-  uint256 public totalStartingSupply = 10**9 * 10**14; //1_000_000_000.00_000_000_000_000 1 billion meowdaos. 10^23
+  uint256 public totalStartingSupply = 10**10 * 10**13; //10_000_000_000.0_000_000_000_000 10 billion MEOWS. 10^23
 
   mapping (address => uint256) private _balances;
   mapping (address => mapping (address => uint256)) private _allowances;
@@ -174,12 +173,6 @@ contract MeowDAO is IERC20, Context {
   function unstakeWalletSansReify() public {
     _unstakeWalletFor(_msgSender(), false);
   }
-
-  function transferToStakedWallet(address wallet, uint256 amount) public {
-    require(isStaked(wallet), "the wallet must be staked");
-    reifyYield(wallet);
-    _transfer(_msgSender(), wallet, amount, true); 
-  } 
 
   function voteIteratorLength() external view returns (uint) {
     return voteIterator.length;
@@ -369,7 +362,7 @@ contract MeowDAO is IERC20, Context {
   }
 
   function enoughtFundsToStake(address wallet) private view returns (bool) {
-    return _balances[wallet] >= 10000000000000000; //10_000_000.000_000_000 grumpy units, placeholder
+    return _balances[wallet] >= 10000000000000000;
   }
 
   function name() external view returns (string memory) {
@@ -406,14 +399,18 @@ contract MeowDAO is IERC20, Context {
     return true;
   }
 
-  function _transfer(address sender, address recipient, uint256 amount, bool overrideLock) internal virtual {
+  function transferToStakedWallet(address wallet, uint256 amount) public {
+    reifyYield(wallet);
+    _transfer(_msgSender(), wallet, amount, true); 
+  } 
+
+  function _transfer(address sender, address recipient, uint256 amount, bool canBeStaked) internal virtual {
     require(sender != address(0), "ERC20: transfer from the zero address");
     require(recipient != address(0), "ERC20: transfer to the zero address");
     require(!isStaked(sender), "StkdWlltCnntTrnsf");
     require(isUnlocked(sender), "LockedWlltCnntTrnsfr");
-    if (!overrideLock) {
+    if (!canBeStaked) {
       require(!isStaked(recipient), "RecipientStaked");
-      require(isUnlocked(recipient), "RecipientLocked");
     }
     require(_balances[sender] >= amount, "ERC20: transfer amount exceeds balance");
 
@@ -440,7 +437,7 @@ contract MeowDAO is IERC20, Context {
   }
 
   function approve(address spender, uint256 amount) public override returns (bool) {
-    _approve(_msgSender(), spender, amount); //_msgSender()
+    _approve(_msgSender(), spender, amount);
     return true;
   }
 
