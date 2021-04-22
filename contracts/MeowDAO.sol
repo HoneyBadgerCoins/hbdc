@@ -120,7 +120,7 @@ contract MeowDAO is IERC20, Context {
   //TODO: make private, is public for testing
   function _stakeWalletFor(address sender) public returns (bool) {
     require(!isStaked(sender));
-    require(enoughtFundsToStake(sender), "InsfcntFnds");
+    require(enoughFundsToStake(sender), "InsfcntFnds");
     require(isUnlocked(sender), "WalletIsLocked");
 
     currentlyStaked[sender] = true;
@@ -357,7 +357,7 @@ contract MeowDAO is IERC20, Context {
     periodStart[wallet] = block.timestamp;
   }
 
-  function enoughtFundsToStake(address wallet) private view returns (bool) {
+  function enoughFundsToStake(address wallet) private view returns (bool) {
     return _balances[wallet] >= 10000000000000000;
   }
 
@@ -395,9 +395,9 @@ contract MeowDAO is IERC20, Context {
     return true;
   }
 
-  function transferToStakedWallet(address wallet, uint256 amount) public {
-    reifyYield(wallet);
-    _transfer(_msgSender(), wallet, amount, true); 
+  function transferToStakedWallet(address recipient, uint256 amount) public {
+    reifyYield(recipient);
+    _transfer(_msgSender(), recipient, amount, true); 
   } 
 
   function _transfer(address sender, address recipient, uint256 amount, bool canBeStaked) internal virtual {
