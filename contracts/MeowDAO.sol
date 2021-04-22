@@ -347,22 +347,12 @@ contract MeowDAO is IERC20, Context {
 
   function getTransactionFee(uint256 txAmt) public view returns (uint256){
     uint period = block.timestamp - _contractStart;
-    uint256 month3 = 7884000;
-    uint256 month6 = 15768000;
-    uint256 month9 = 23652000;
-    uint256 month12= 31536000;
 
-    if(period <= month3) {
-      return (txAmt/10000) * 100; //0.01
-    } else if (period <= month6) {
-      return (txAmt/10000) * 75;  //0.0075
-    } else if (period <= month9) {
-      return (txAmt/10000) * 50;  //0.0050
-    } else if (period <= month12) {
-      return (txAmt/10000) * 25;  //0.0025
-    } else {
-      return 0;
-    }
+    if (period > 31536000) return 0;
+    else if (period > 23652000) return txAmt / 400;
+    else if (period > 15768000) return txAmt / 200;
+    else if (period > 7884000) return (txAmt / 400) * 3;
+    else return txAmt / 100;
   } 
 
   function reifyYield(address wallet) public {
@@ -424,30 +414,28 @@ contract MeowDAO is IERC20, Context {
     _transfer(_msgSender(), recipient, amount);
     return true;
   }
-  
+
   function _transfer(address sender, address recipient, uint256 amount) internal virtual {
     require(sender != address(0), "ERC20: transfer from the zero address");
     require(recipient != address(0), "ERC20: transfer to the zero address");
     require(!isStaked(sender), "StkdWlltCnntTrnsf");
     require(isUnlocked(sender), "LockedWlltCnntTrnsfr");
+    require(_balances[sender] >= amount, "ERC20: transfer amount exceeds balance");
 
-    uint256 senderBalance = _balances[sender];
-    require(senderBalance >= amount, "ERC20: transfer amount exceeds balance");
+    uint sentAmount = amount; 
 
     address charityWallet = getCharityWallet();
-
-    if(charityWallet == address(0)) {
-      _balances[sender] = senderBalance - amount;
-      _balances[recipient] += amount;
-
-    } else {
+    if (charityWallet != address(0)) {
       uint256 txFee = getTransactionFee(amount);
-      if (txFee != 0) { //after 12 month this wouldn't matter.
+
+      if (txFee != 0) {
+        sentAmount -= txFee;
         _balances[charityWallet] += txFee;
-        amount -= txFee;
-       _balances[recipient] += amount;
       }
     }
+
+    _balances[sender] -= amount;
+    _balances[recipient] += sentAmount;
 
     emit Transfer(sender, recipient, amount);
   }
