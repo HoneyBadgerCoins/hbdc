@@ -192,10 +192,10 @@ contract MeowDAO is IERC20, Context {
     _unstakeWalletFor(_msgSender(), false);
   }
 
-  function sendFundsToStakedWallet(address wallet, uint256 amount) public {
+  function transferToStakedWallet(address wallet, uint256 amount) public {
     require(isStaked(wallet), "the wallet must be staked");
     reifyYield(wallet);
-    _transfer(_msgSender(), wallet, amount); 
+    _transfer(_msgSender(), wallet, amount, true); 
   } 
 
   function voteIteratorLength() external view returns (uint) {
@@ -411,15 +411,19 @@ contract MeowDAO is IERC20, Context {
   }
 
   function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-    _transfer(_msgSender(), recipient, amount);
+    _transfer(_msgSender(), recipient, amount, false);
     return true;
   }
 
-  function _transfer(address sender, address recipient, uint256 amount) internal virtual {
+  function _transfer(address sender, address recipient, uint256 amount, bool overrideLock) internal virtual {
     require(sender != address(0), "ERC20: transfer from the zero address");
     require(recipient != address(0), "ERC20: transfer to the zero address");
     require(!isStaked(sender), "StkdWlltCnntTrnsf");
     require(isUnlocked(sender), "LockedWlltCnntTrnsfr");
+    if (!overrideLock) {
+      require(!isStaked(recipient), "RecipientStaked");
+      require(isUnlocked(recipient), "RecipientLocked");
+    }
     require(_balances[sender] >= amount, "ERC20: transfer amount exceeds balance");
 
     uint sentAmount = amount; 
@@ -458,7 +462,7 @@ contract MeowDAO is IERC20, Context {
   }
 
   function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
-    _transfer(sender, recipient, amount);
+    _transfer(sender, recipient, amount, false);
 
     uint256 currentAllowance = _allowances[sender][_msgSender()];
     require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");

@@ -466,7 +466,6 @@ contract('MeowDAO', accounts => {
     
     it('should not reach the gas limit by sorting the worse case list', async function () {
       const tx = await meow.rebuildVotingIterator();
-      console.log(tx);
     });
   })
 
@@ -478,14 +477,19 @@ contract('MeowDAO', accounts => {
     expect(await getErrorMsg(() => meow.transferFrom(accounts[0], accounts[1], 10000000))).to.equal("StkdWlltCnntTrnsf");
   });
 
-  it("Allows a user to send funds to a staked wallet using sendFundsToStakeWallet", async function (){
+  it("should only allow a user to send funds to a staked wallet using transferToStakedWallet", async function (){
     await initializeAccounts(grumpy, meow, accounts, [B('10000000000000000'), B('10000000000000000')]);
 
     await meow._stakeWalletFor(accounts[1]);
-    await meow.sendFundsToStakedWallet(accounts[1], 50000000000);
+    await meow.transferToStakedWallet(accounts[1], 50000000000);
 
     let transfer = await meow.balanceOf(accounts[1]);
     expect(transfer.toString()).to.equal("10000050000000000");
+
+    await expectRevert(meow.transfer(accounts[1], '123132123'), 'RecipientStaked')
+
+    await meow.approve(accounts[0], '10000000');
+    await expectRevert(meow.transferFrom(accounts[0], accounts[1], '123132123'), 'RecipientStaked')
   });
 
   it("locking should work", async function (){
