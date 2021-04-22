@@ -10,11 +10,6 @@ import "./interfaces/IFuelTank.sol";
 contract MeowDAO is IERC20, Context {
   using FixidityLib for int256;
 
-  //TODO: REMOVE FOR MAIN NET
-  function _testAdvanceEndTime () external {
-    swapEndTime = swapEndTime - (86400 * 10);
-  }
-
   uint256 _totalSupply = 0;
   string private _name = "MeowDAO governance token";
   string private _symbol = 'MEOW';

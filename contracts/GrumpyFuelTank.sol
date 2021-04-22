@@ -67,7 +67,6 @@ contract GrumpyFuelTank is Context, Ownable, IFuelTank {
     reclaimableBalances[sender] = 0;
   }
 
-  //TODO: pass deadline
   function sellGrumpy(uint256 amount, uint256 amountOutMin) public onlyOwner {
     require(nozzleOpen);
     if (block.timestamp < reclaimGuaranteeTime) {
