@@ -295,19 +295,19 @@ contract('MeowDAO', accounts => {
 
     await meow.voteForAddress(accounts[6]);
 
-    expect(await meow.getCharityWallet()).to.equal(accounts[6]);
+    expect(await meow.currentCharityWallet()).to.equal(accounts[6]);
 
     await meow._voteForAddressBy(accounts[5], accounts[1]);
 
-    expect(await meow.getCharityWallet()).to.equal(accounts[5]);
+    expect(await meow.currentCharityWallet()).to.equal(accounts[5]);
 
     await meow._voteForAddressBy(accounts[6], accounts[2]);
 
-    expect(await meow.getCharityWallet()).to.equal(accounts[6]);
+    expect(await meow.currentCharityWallet()).to.equal(accounts[6]);
     
     await meow.voteForAddress(address0);
 
-    expect(await meow.getCharityWallet()).to.equal(accounts[5]);
+    expect(await meow.currentCharityWallet()).to.equal(accounts[5]);
 
     await increaseTime(31556952000);
 
@@ -315,7 +315,7 @@ contract('MeowDAO', accounts => {
 
     await meow._voteForAddressBy(accounts[6], accounts[2]);
 
-    expect(await meow.getCharityWallet()).to.equal(accounts[6]);
+    expect(await meow.currentCharityWallet()).to.equal(accounts[6]);
   });
 
   it('should handle address0 in votes correctly', async function () {
@@ -542,7 +542,7 @@ contract('MeowDAO', accounts => {
             expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
           });
           it('should reset currentCharityWallet to address0', async function () {
-            const w = await meow.getCharityWallet();
+            const w = await meow.currentCharityWallet();
             expect(w).to.equal(address0);
           });
         });
@@ -555,7 +555,7 @@ contract('MeowDAO', accounts => {
             expect(b.toString()).to.satisfy(priceRange('10699800000000000', '10700900000000000'));
           });
           it('should reset currentCharityWallet to address0', async function () {
-            const w = await meow.getCharityWallet();
+            const w = await meow.currentCharityWallet();
             expect(w).to.equal(address0);
           });
         });
