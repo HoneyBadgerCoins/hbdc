@@ -391,24 +391,20 @@ contract MeowDAO is IERC20, Context {
   }
 
   function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
-    _transfer(_msgSender(), recipient, amount, false);
+    _transfer(_msgSender(), recipient, amount);
     return true;
   }
 
-  function transferToStakedWallet(address recipient, uint256 amount) public {
-    reifyYield(recipient);
-    _transfer(_msgSender(), recipient, amount, true);
-  } 
-
-  function _transfer(address sender, address recipient, uint256 amount, bool canBeStaked) internal virtual {
+  function _transfer(address sender, address recipient, uint256 amount) internal virtual {
     require(sender != address(0), "ERC20: transfer from the zero address");
     require(recipient != address(0), "ERC20: transfer to the zero address");
     require(!isStaked(sender), "StkdWlltCnntTrnsf");
     require(isUnlocked(sender), "LockedWlltCnntTrnsfr");
-    if (!canBeStaked) {
-      require(!isStaked(recipient), "RecipientStaked");
-    }
     require(_balances[sender] >= amount, "ERC20: transfer amount exceeds balance");
+
+    if (isStaked(recipient)) {
+      reifyYield(recipient);
+    }
 
     uint sentAmount = amount; 
 
@@ -445,7 +441,7 @@ contract MeowDAO is IERC20, Context {
   }
 
   function transferFrom(address sender, address recipient, uint256 amount) public override returns (bool) {
-    _transfer(sender, recipient, amount, false);
+    _transfer(sender, recipient, amount);
 
     uint256 currentAllowance = _allowances[sender][_msgSender()];
     require(currentAllowance >= amount, "ERC20: transfer amount exceeds allowance");
