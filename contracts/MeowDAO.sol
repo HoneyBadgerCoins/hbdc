@@ -272,19 +272,11 @@ contract MeowDAO is IERC20, Context {
 
     emit NewCharityWallet(currentCharityWallet, winner);
 
-    //if old winner was staked
-    if (currentlyStaked[currentCharityWallet]) {
-      //reset their yield period start to the present so they can't double dip
-      periodStart[currentCharityWallet] = block.timestamp;
-    }
-
-    //if new charity address is staked
-    if (currentlyStaked[winner]) {
-      //reify the new wallet before they become the currentCharityWallet
-      reifyYield(winner);
-    }
-
     currentCharityWallet = winner;
+  }
+
+  function validCharityWallet() internal returns (bool) {
+    currentCharityWallet != address(0) && !isStaked(currentCharityWallet);
   }
 
   function getCompoundingFactor(address wallet) private view returns (uint) {
@@ -323,17 +315,16 @@ contract MeowDAO is IERC20, Context {
 
   function reifyYield(address wallet) public {
     require(isStaked(wallet), 'MstBeStkd');
-    if (currentCharityWallet == wallet) return;
 
     uint compoundingFactor = getCompoundingFactor(wallet);
 
-    if (compoundingFactor < 7200) return;
+    if (compoundingFactor < 60) return;
 
     uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
 
     _balances[wallet] = _balances[wallet] + yield;
 
-    if (currentCharityWallet != address(0)) {
+    if (validCharityWallet()) {
       uint256 charityYield = (yield / 7) * 3;
       _balances[currentCharityWallet] = _balances[currentCharityWallet] + charityYield;
       _totalSupply = _totalSupply + yield + charityYield;
@@ -395,7 +386,7 @@ contract MeowDAO is IERC20, Context {
 
     uint sentAmount = amount; 
 
-    if (currentCharityWallet != address(0)) {
+    if (validCharityWallet()) {
       uint256 txFee = getTransactionFee(amount);
 
       if (txFee != 0) {
