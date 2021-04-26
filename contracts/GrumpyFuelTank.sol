@@ -33,6 +33,7 @@ contract GrumpyFuelTank is Context, Ownable, IFuelTank {
 
   bool public nozzleOpen = false;
   function openNozzle() external override {
+    require(!nozzleOpen, "AlreadyOpen");
     require(meowDAOAddress != address(0), "MeowDAONotInitialized");
     require(msg.sender == meowDAOAddress, "MustBeMeowDao");
 
