@@ -286,7 +286,7 @@
 
 
 
-    contract Grumpy is Context, IERC20, Ownable {
+    contract HoneyBadger is Context, IERC20, Ownable {
         using SafeMath for uint256;
         using Address for address;
 
@@ -298,12 +298,12 @@
         address[] private _excluded;
     
         uint256 private constant MAX = ~uint256(0);
-        uint256 private constant _tTotal = 100000000 * 10**6 * 10**9; 
+        uint256 private constant _tTotal = 1000000000000 * 10**6 * 10**9; 
         uint256 private _rTotal = (MAX - (MAX % _tTotal));
         uint256 private _tFeeTotal;
 
-        string private _name = 'Grumpy Cat';
-        string private _symbol = 'GRUMPY';
+        string private _name = 'Honey Badger';
+        string private _symbol = 'HONEYBADGER';
         uint8 private _decimals = 9;
 
         constructor () public {
