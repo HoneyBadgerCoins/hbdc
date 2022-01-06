@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./FixidityLib.sol";
 import "./interfaces/SafeMath.sol";
 import "./interfaces/Ownable.sol";
 import "./interfaces/SafeMathInt.sol";
-import "./interfaces/IFuelTank.sol";
 import "./interfaces/IUniswapV2Pair.sol";
 import "./interfaces/IUniswapV2Factory.sol";
 import "./interfaces/IUniswapV2Router01.sol";
 import "./interfaces/IUniswapV2Router02.sol";
+import "./HoneyVote.sol";
 
-contract HBDC is Ownable, IERC20 {
-    using FixidityLib for int256;
+contract HBDC is HoneyVote, Ownable {
     using SafeMath for uint256;
+
     IUniswapV2Router02 public uniswapV2Router;
     address public uniswapV2Pair;
     address public constant deadAddress = address(0xdead);
@@ -24,10 +22,13 @@ contract HBDC is Ownable, IERC20 {
 
     address public marketingWallet;
     address public devWallet;
+    address public allianceWallet;
 
     uint256 public maxTransactionAmount;
     uint256 public swapTokensAtAmount;
     uint256 public maxWallet;
+
+    mapping (address => uint256) private _balances;
 
     uint256 public percentForLPBurn = 25; // 25 = .25%
     bool public lpBurnEnabled = true;
@@ -49,48 +50,21 @@ contract HBDC is Ownable, IERC20 {
     uint256 public buyMarketingFee;
     uint256 public buyLiquidityFee;
     uint256 public buyDevFee;
+    uint256 public buyAllianceFee;
 
     uint256 public sellTotalFees;
     uint256 public sellMarketingFee;
     uint256 public sellLiquidityFee;
     uint256 public sellDevFee;
+    uint256 public sellAllianceFee;
 
     uint256 public tokensForMarketing;
     uint256 public tokensForLiquidity;
     uint256 public tokensForDev;
+    uint256 public tokensForAlliance;
+
     uint256 public override totalSupply;
     /******************/
-
-    string private _name = "HoneyBadger";
-    string private _symbol = "HBDC";
-
-    uint8 private _decimals = 18;
-    uint256 private _contractStart;
-
-    address public HoneyBadgerAddress;
-    address public HoneyBadgerFuelTankAddress;
-    uint256 public swapEndTime;
-
-    bool public launched = false;
-
-    uint256 public totalStartingSupply = 10**9 * 10**18; //10_000_000_000.0_000_000_000_000 10 billion MEOWS. 10^23
-
-    mapping(address => uint256) private _balances;
-    mapping(address => mapping(address => uint256)) private _allowances;
-
-    mapping(address => uint256) public periodStart;
-    mapping(address => bool) public currentlyStaked;
-    mapping(address => uint256) public unlockStartTime;
-    mapping(address => address) public currentVotes;
-    mapping(address => uint256) public voteWeights;
-
-    mapping(address => uint256) public stakingCoordinatesTime;
-    mapping(address => uint256) public stakingCoordinatesAmount;
-
-    mapping(address => uint256) public voteCounts;
-    address[] public voteIterator;
-    mapping(address => bool) public walletWasVotedFor;
-    address public currentCharityWallet;
 
     // exlcude from fees and max transaction amount
     mapping(address => bool) private _isExcludedFromFees;
@@ -118,6 +92,11 @@ contract HBDC is Ownable, IERC20 {
         address indexed newWallet,
         address indexed oldWallet
     );
+
+    event allianceWalletUpdated(
+        address indexed newWallet,
+        address indexed oldWallet
+      );
 
     event SwapAndLiquify(
         uint256 tokensSwapped,
@@ -155,11 +134,13 @@ contract HBDC is Ownable, IERC20 {
         _setAutomatedMarketMakerPair(address(uniswapV2Pair), true);
 
         uint256 _buyMarketingFee = 4;
-        uint256 _buyLiquidityFee = 10;
+        uint256 _buyAllianceFee = 1;
+        uint256 _buyLiquidityFee = 5;
         uint256 _buyDevFee = 1;
 
         uint256 _sellMarketingFee = 5;
-        uint256 _sellLiquidityFee = 14;
+        uint256 _sellLiquidityFee = 7;
+        uint256 _sellAllianceFee = 1;
         uint256 _sellDevFee = 1;
 
         totalSupply = 1 * 1e12 * 1e18;
@@ -170,14 +151,17 @@ contract HBDC is Ownable, IERC20 {
 
         buyMarketingFee = _buyMarketingFee;
         buyLiquidityFee = _buyLiquidityFee;
+        buyAllianceFee = _buyAllianceFee;
         buyDevFee = _buyDevFee;
         buyTotalFees = buyMarketingFee + buyLiquidityFee + buyDevFee;
 
         sellMarketingFee = _sellMarketingFee;
         sellLiquidityFee = _sellLiquidityFee;
+        sellAllianceFee = _sellAllianceFee;
         sellDevFee = _sellDevFee;
         sellTotalFees = sellMarketingFee + sellLiquidityFee + sellDevFee;
 
+        allianceWallet = address(owner()); // set as alliance wallet
         marketingWallet = address(owner()); // set as marketing wallet
         devWallet = address(owner()); // set as dev wallet
 
@@ -261,27 +245,31 @@ contract HBDC is Ownable, IERC20 {
     }
 
     function updateBuyFees(
+        uint256 _allianceFee,
         uint256 _marketingFee,
         uint256 _liquidityFee,
         uint256 _devFee
     ) external onlyOwner {
+        buyAllianceFee = _allianceFee;
         buyMarketingFee = _marketingFee;
         buyLiquidityFee = _liquidityFee;
         buyDevFee = _devFee;
-        buyTotalFees = buyMarketingFee + buyLiquidityFee + buyDevFee;
-        require(buyTotalFees <= 20, "Must keep fees at 20% or less");
+        buyTotalFees = buyMarketingFee + buyLiquidityFee + buyDevFee + buyAllianceFee;
+        require(buyTotalFees <= 50, "Must keep fees at 20% or less");
     }
 
     function updateSellFees(
+        uint256 _allianceFee,
         uint256 _marketingFee,
         uint256 _liquidityFee,
         uint256 _devFee
     ) external onlyOwner {
+        sellAllianceFee = _allianceFee;
         sellMarketingFee = _marketingFee;
         sellLiquidityFee = _liquidityFee;
         sellDevFee = _devFee;
-        sellTotalFees = sellMarketingFee + sellLiquidityFee + sellDevFee;
-        require(sellTotalFees <= 25, "Must keep fees at 25% or less");
+        sellTotalFees = sellMarketingFee + sellLiquidityFee + sellDevFee + sellAllianceFee;
+        require(sellTotalFees <= 50, "Must keep fees at 25% or less");
     }
 
     function excludeFromFees(address account, bool excluded) public onlyOwner {
@@ -318,6 +306,11 @@ contract HBDC is Ownable, IERC20 {
     function updateDevWallet(address newWallet) external onlyOwner {
         emit devWalletUpdated(newWallet, devWallet);
         devWallet = newWallet;
+    }
+
+    function updateAllianceWallet(address newWallet) external onlyOwner {
+        emit allianceWalletUpdated(newWallet, allianceWallet);
+        allianceWallet = newWallet;
     }
 
     function isExcludedFromFees(address account) public view returns (bool) {
@@ -448,6 +441,7 @@ contract HBDC is Ownable, IERC20 {
                 tokensForLiquidity += (fees * sellLiquidityFee) / sellTotalFees;
                 tokensForDev += (fees * sellDevFee) / sellTotalFees;
                 tokensForMarketing += (fees * sellMarketingFee) / sellTotalFees;
+                tokensForAlliance += (fees * sellAllianceFee) / sellTotalFees;
             }
             // on buy
             else if (automatedMarketMakerPairs[from] && buyTotalFees > 0) {
@@ -455,6 +449,7 @@ contract HBDC is Ownable, IERC20 {
                 tokensForLiquidity += (fees * buyLiquidityFee) / buyTotalFees;
                 tokensForDev += (fees * buyDevFee) / buyTotalFees;
                 tokensForMarketing += (fees * buyMarketingFee) / buyTotalFees;
+                tokensForAlliance += (fees * buyAllianceFee) / buyTotalFees;
             }
 
             if (fees > 0) {
@@ -504,7 +499,8 @@ contract HBDC is Ownable, IERC20 {
         uint256 contractBalance = balanceOf(address(this));
         uint256 totalTokensToSwap = tokensForLiquidity +
             tokensForMarketing +
-            tokensForDev;
+            tokensForDev +
+            tokensForAlliance;
         bool success;
 
         if (contractBalance == 0 || totalTokensToSwap == 0) {
@@ -532,11 +528,14 @@ contract HBDC is Ownable, IERC20 {
         );
         uint256 ethForDev = ethBalance.mul(tokensForDev).div(totalTokensToSwap);
 
-        uint256 ethForLiquidity = ethBalance - ethForMarketing - ethForDev;
+        uint256 ethForAlliance = ethBalance.mul(tokensForAlliance).div(totalTokensToSwap);
+
+        uint256 ethForLiquidity = ethBalance - ethForMarketing - ethForDev - ethForAlliance;
 
         tokensForLiquidity = 0;
         tokensForMarketing = 0;
         tokensForDev = 0;
+        tokensForAlliance = 0;
 
         (success, ) = address(devWallet).call{value: ethForDev}("");
 
@@ -622,468 +621,6 @@ contract HBDC is Ownable, IERC20 {
         IUniswapV2Pair pair = IUniswapV2Pair(uniswapV2Pair);
         pair.sync();
         emit ManualNukeLP();
-        return true;
-    }
-
-    function _swapHoneyBadgerInternal(address user, uint256 amount) private {
-        require(block.timestamp < swapEndTime);
-        require(!isStaked(user), "cannot swap into staked wallet");
-
-        IERC20(HoneyBadgerAddress).transferFrom(
-            user,
-            HoneyBadgerFuelTankAddress,
-            amount
-        );
-        IFuelTank(HoneyBadgerFuelTankAddress).addTokens(user, amount);
-
-        _balances[user] += amount;
-
-        totalSupply += amount;
-
-        emit Transfer(address(0), user, amount);
-    }
-
-    function swapHoneyBadger(uint256 amount) public {
-        _swapHoneyBadgerInternal(_msgSender(), amount);
-    }
-
-    function initializeCoinThruster() external {
-        require(block.timestamp >= swapEndTime, "NotReady");
-        require(launched == false, "AlreadyLaunched");
-
-        IFuelTank(HoneyBadgerFuelTankAddress).openNozzle();
-
-        if (totalStartingSupply > totalSupply) {
-            uint256 remainingTokens = totalStartingSupply - totalSupply;
-
-            _balances[HoneyBadgerFuelTankAddress] =
-                _balances[HoneyBadgerFuelTankAddress] +
-                remainingTokens;
-            totalSupply += remainingTokens;
-
-            emit Transfer(
-                address(0),
-                HoneyBadgerFuelTankAddress,
-                remainingTokens
-            );
-        }
-
-        launched = true;
-    }
-
-    function getBlockTime() public view returns (uint256) {
-        return block.timestamp;
-    }
-
-    function isStaked(address wallet) public view returns (bool) {
-        return currentlyStaked[wallet];
-    }
-
-    function isUnlocked(address wallet) private returns (bool) {
-        uint256 unlockStarted = unlockStartTime[wallet];
-
-        if (unlockStarted == 0) return true;
-
-        uint256 unlockedAt = unlockStarted + (86400 * 5);
-
-        if (block.timestamp > unlockedAt) {
-            unlockStartTime[wallet] = 0;
-            return true;
-        } else return false;
-    }
-
-    function _stakeWalletFor(address sender) private returns (bool) {
-        require(!isStaked(sender));
-        require(enoughFundsToStake(sender), "InsfcntFnds");
-        require(isUnlocked(sender), "WalletIsLocked");
-
-        currentlyStaked[sender] = true;
-        unlockStartTime[sender] = 0;
-        currentVotes[sender] = address(0);
-        periodStart[sender] = block.timestamp;
-
-        stakingCoordinatesTime[sender] = block.timestamp;
-        stakingCoordinatesAmount[sender] = _balances[sender];
-
-        return true;
-    }
-
-    function stakeWallet() public returns (bool) {
-        return _stakeWalletFor(_msgSender());
-    }
-
-    function _unstakeWalletFor(address sender, bool shouldReify) private {
-        require(isStaked(sender));
-
-        if (shouldReify) reifyYield(sender);
-
-        if (voteWeights[sender] != 0) {
-            removeVoteWeight(sender);
-            updateCharityWallet();
-        }
-
-        currentlyStaked[sender] = false;
-        currentVotes[sender] = address(0);
-        voteWeights[sender] = 0;
-        periodStart[sender] = 0;
-
-        stakingCoordinatesTime[sender] = 0;
-        stakingCoordinatesAmount[sender] = 0;
-
-        unlockStartTime[sender] = block.timestamp;
-    }
-
-    function unstakeWallet() public {
-        _unstakeWalletFor(_msgSender(), true);
-    }
-
-    function unstakeWalletSansReify() public {
-        _unstakeWalletFor(_msgSender(), false);
-    }
-
-    function voteIteratorLength() external view returns (uint256) {
-        return voteIterator.length;
-    }
-
-    function voteWithRebuildIfNecessary(address charityWalletVote) public {
-        if (
-            voteIterator.length == 12 && !walletWasVotedFor[charityWalletVote]
-        ) {
-            rebuildVotingIterator();
-        }
-        _voteForAddressBy(charityWalletVote, _msgSender());
-    }
-
-    function rebuildVotingIterator() public {
-        require(voteIterator.length == 12, "Voting Iterator not full");
-
-        address[12] memory voteCopy;
-        for (uint256 i = 0; i < 12; i++) {
-            voteCopy[i] = voteIterator[i];
-        }
-
-        //insertion sort copy
-        for (uint256 i = 1; i < 12; i++) {
-            address keyAddress = voteCopy[i];
-            uint256 key = voteCounts[keyAddress];
-
-            uint256 j = i - 1;
-
-            bool broke = false;
-            while (j >= 0 && voteCounts[voteCopy[j]] < key) {
-                voteCopy[j + 1] = voteCopy[j];
-
-                if (j == 0) {
-                    broke = true;
-                    break;
-                } else j--;
-            }
-
-            if (broke) voteCopy[0] = keyAddress;
-            else voteCopy[j + 1] = keyAddress;
-        }
-
-        for (uint256 i = 11; i >= 6; i--) {
-            address vote = voteCopy[i];
-            walletWasVotedFor[vote] = false;
-        }
-
-        delete voteIterator;
-        for (uint256 i = 0; i < 6; i++) {
-            voteIterator.push(voteCopy[i]);
-        }
-    }
-
-    function _voteForAddressBy(address charityWalletVote, address sender)
-        private
-    {
-        require(isStaked(sender));
-
-        trackCandidate(charityWalletVote);
-
-        removeVoteWeight(sender);
-        setVoteWeight(sender);
-        addVoteWeight(sender, charityWalletVote);
-        updateCharityWallet();
-    }
-
-    function trackCandidate(address charityWalletCandidate) private {
-        // If wallet was never voted for before add it to voteIterator
-        if (!walletWasVotedFor[charityWalletCandidate]) {
-            require(voteIterator.length < 12, "Vote Iterator must be rebuilt");
-
-            voteIterator.push(charityWalletCandidate);
-            walletWasVotedFor[charityWalletCandidate] = true;
-        }
-    }
-
-    function removeVoteWeight(address sender) private {
-        address vote = currentVotes[sender];
-        voteCounts[vote] = voteCounts[vote] - voteWeights[sender];
-    }
-
-    function setVoteWeight(address sender) private {
-        uint256 newVoteWeight = _balances[sender];
-        voteWeights[sender] = newVoteWeight;
-    }
-
-    function addVoteWeight(address sender, address charityWalletVote) private {
-        voteCounts[charityWalletVote] =
-            voteCounts[charityWalletVote] +
-            voteWeights[sender];
-        currentVotes[sender] = charityWalletVote;
-    }
-
-    function voteForAddress(address charityWalletVote) public {
-        _voteForAddressBy(charityWalletVote, _msgSender());
-    }
-
-    event NewCharityWallet(address oldW, address newW);
-
-    function updateCharityWallet() private {
-        uint256 maxVoteValue = 0;
-        address winner = address(0);
-
-        for (uint256 i = 0; i < voteIterator.length; i++) {
-            address currentWallet = voteIterator[i];
-            uint256 voteValue = voteCounts[currentWallet];
-
-            if (voteValue > maxVoteValue) {
-                maxVoteValue = voteValue;
-                winner = currentWallet;
-            }
-        }
-
-        if (currentCharityWallet == winner) return;
-
-        emit NewCharityWallet(currentCharityWallet, winner);
-
-        currentCharityWallet = winner;
-    }
-
-    function validCharityWallet() internal returns (bool) {
-        currentCharityWallet != address(0) && !isStaked(currentCharityWallet);
-    }
-
-    function getCompoundingFactor(address wallet)
-        private
-        view
-        returns (uint256)
-    {
-        return block.timestamp - periodStart[wallet];
-    }
-
-    function calculateYield(uint256 principal, uint256 n)
-        public
-        pure
-        returns (uint256)
-    {
-        int256 fixedPrincipal = int256(principal).newFixed();
-
-        int256 rate = int256(2144017221509).newFixedFraction(
-            1000000000000000000000
-        );
-        int256 fixed2 = int256(2).newFixed();
-
-        while (n > 0) {
-            if (n % 2 == 1) {
-                fixedPrincipal = fixedPrincipal.add(
-                    fixedPrincipal.multiply(rate)
-                );
-                n -= 1;
-            } else {
-                rate = (fixed2.multiply(rate)).add(rate.multiply(rate));
-                n /= 2;
-            }
-        }
-        return uint256(fixedPrincipal.fromFixed()) - principal;
-    }
-
-    function getTransactionFee(uint256 txAmt) private view returns (uint256) {
-        uint256 period = block.timestamp - _contractStart;
-
-        if (period > 31536000) return 0;
-        else if (period > 23652000) return txAmt / 400;
-        else if (period > 15768000) return txAmt / 200;
-        else if (period > 7884000) return (txAmt / 400) * 3;
-        else return txAmt / 100;
-    }
-
-    function reifyYield(address wallet) public {
-        require(isStaked(wallet), "MstBeStkd");
-
-        uint256 compoundingFactor = getCompoundingFactor(wallet);
-
-        if (compoundingFactor < 60) return;
-
-        uint256 yield = calculateYield(_balances[wallet], compoundingFactor);
-
-        _balances[wallet] += yield;
-
-        if (validCharityWallet()) {
-            uint256 charityYield = (yield / 7) * 3;
-            _balances[currentCharityWallet] += charityYield;
-            totalSupply += (yield + charityYield);
-        } else {
-            totalSupply += yield;
-        }
-
-        periodStart[wallet] = block.timestamp;
-    }
-
-    function enoughFundsToStake(address wallet) private view returns (bool) {
-        return _balances[wallet] >= 1000000000000000000000;
-    }
-
-    function name() external view returns (string memory) {
-        return _name;
-    }
-
-    function symbol() external view returns (string memory) {
-        return _symbol;
-    }
-
-    function decimals() external view returns (uint8) {
-        return _decimals;
-    }
-
-    function contractStart() external view returns (uint256) {
-        return _contractStart;
-    }
-
-    function balanceOf(address account)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        uint256 b = _balances[account];
-
-        if (isStaked(account) && currentCharityWallet != account) {
-            return b + calculateYield(b, getCompoundingFactor(account));
-        }
-        return b;
-    }
-
-    function transfer(address recipient, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        _transfer(_msgSender(), recipient, amount);
-        return true;
-    }
-
-    function _transfer(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) internal virtual {
-        require(sender != address(0), "ERC20: transfer from the zero address");
-        require(recipient != address(0), "ERC20: transfer to the zero address");
-        require(!isStaked(sender), "StkdWlltCnntTrnsf");
-        require(isUnlocked(sender), "LockedWlltCnntTrnsfr");
-        require(
-            _balances[sender] >= amount,
-            "ERC20: transfer amount exceeds balance"
-        );
-
-        if (isStaked(recipient)) {
-            reifyYield(recipient);
-        }
-
-        uint256 sentAmount = amount;
-
-        if (validCharityWallet()) {
-            uint256 txFee = getTransactionFee(amount);
-
-            if (txFee != 0) {
-                sentAmount -= txFee;
-                _balances[currentCharityWallet] += txFee;
-            }
-        }
-
-        _balances[sender] -= amount;
-        _balances[recipient] += sentAmount;
-
-        emit Transfer(sender, recipient, amount);
-    }
-
-    function allowance(address owner, address spender)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        return _allowances[owner][spender];
-    }
-
-    function approve(address spender, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
-        _approve(_msgSender(), spender, amount);
-        return true;
-    }
-
-    function _approve(
-        address owner,
-        address spender,
-        uint256 amount
-    ) internal virtual {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
-
-        _allowances[owner][spender] = amount;
-        emit Approval(owner, spender, amount);
-    }
-
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) public virtual override returns (bool) {
-        _transfer(sender, recipient, amount);
-
-        uint256 currentAllowance = _allowances[sender][_msgSender()];
-        require(
-            currentAllowance >= amount,
-            "ERC20: transfer amount exceeds allowance"
-        );
-        _approve(sender, _msgSender(), currentAllowance - amount);
-
-        return true;
-    }
-
-    function increaseAllowance(address spender, uint256 addedValue)
-        public
-        virtual
-        returns (bool)
-    {
-        _approve(
-            _msgSender(),
-            spender,
-            _allowances[_msgSender()][spender] + addedValue
-        );
-        return true;
-    }
-
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        public
-        virtual
-        returns (bool)
-    {
-        uint256 currentAllowance = _allowances[_msgSender()][spender];
-        require(
-            currentAllowance >= subtractedValue,
-            "ERC20: decreased allowance below zero"
-        );
-        _approve(_msgSender(), spender, currentAllowance - subtractedValue);
         return true;
     }
 }
