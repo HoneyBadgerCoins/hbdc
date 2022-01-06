@@ -120,7 +120,7 @@ contract HBDC is HoneyVote, Ownable {
         swapEndTime = block.timestamp + (86400 * 5);
     }
    **/
-    constructor() {
+    constructor(address _HoneyBadgerAddress, address _HoneyBadgerFuelTankAddress) HoneyVote(_HoneyBadgerAddress, _HoneyBadgerFuelTankAddress){
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
             0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
         );

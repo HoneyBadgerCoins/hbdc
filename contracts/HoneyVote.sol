@@ -275,8 +275,8 @@ contract HoneyVote is IERC20, Context {
     currentCharityWallet = winner;
   }
 
-  function validCharityWallet() internal returns (bool) {
-    currentCharityWallet != address(0) && !isStaked(currentCharityWallet);
+  function validCharityWallet() internal view returns (bool) {
+    return currentCharityWallet != address(0) && !isStaked(currentCharityWallet);
   }
 
   function getCompoundingFactor(address wallet) private view returns (uint) {
