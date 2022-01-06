@@ -1,0 +1,48 @@
+{
+	"compiler": {
+		"version": "0.8.0+commit.c7dfd78e"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"author": "Gadi Guy, Alberto Cuesta Canada",
+			"kind": "dev",
+			"methods": {},
+			"title": "FixidityLib",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"notice": "This library provides fixed point arithmetic with protection against overflow.  All operations are done with int256 and the operands must have been created  with any of the newFrom* functions, which shift the comma digits() to the  right and check for limits. When using this library be sure of using maxNewFixed() as the upper limit for creation of fixed point numbers. Use maxFixedMul(), maxFixedDiv() and maxFixedAdd() if you want to be certain that those operations don't  overflow.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"FixidityLib.sol": "FixidityLib"
+		},
+		"evmVersion": "istanbul",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"FixidityLib.sol": {
+			"keccak256": "0xd17bcaf55dd37937d25914f67d1fcf97993e4d730c4cde5a0dfc4f6720cc27a7",
+			"license": "UNLICENSED",
+			"urls": [
+				"bzz-raw://c4f9376e9f73f47121a2de0acdefa1460e2791c47beb9c9081bce8de4dda0dcd",
+				"dweb:/ipfs/QmaS2rveusdvcTVBzYisqFDVbSKR2daTtm9guxteN9HSZA"
+			]
+		}
+	},
+	"version": 1
+}
