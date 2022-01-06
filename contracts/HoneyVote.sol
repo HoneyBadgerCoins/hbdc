@@ -355,7 +355,7 @@ contract HoneyVote is IERC20, Context {
     return _contractStart;
   }
 
-  function totalSupply() external view override returns (uint256) {
+  function totalSupply() external view virtual override returns (uint256) {
     return _totalSupply;
   }
 
