@@ -133,16 +133,15 @@ contract HBDC is HoneyVote, Ownable {
         excludeFromMaxTransaction(address(uniswapV2Pair), true);
         _setAutomatedMarketMakerPair(address(uniswapV2Pair), true);
 
-        uint256 _buyMarketingFee = 4;
+        uint256 _buyMarketingFee = 6;
         uint256 _buyAllianceFee = 1;
         uint256 _buyLiquidityFee = 5;
         uint256 _buyDevFee = 1;
 
-        uint256 _sellMarketingFee = 5;
+        uint256 _sellMarketingFee = 9;
         uint256 _sellLiquidityFee = 7;
         uint256 _sellAllianceFee = 1;
         uint256 _sellDevFee = 1;
-
         totalSupply = 1 * 1e12 * 1e18;
 
         maxTransactionAmount = (totalSupply * 1) / 1000; // 0.1% maxTransactionAmountTxn
@@ -163,7 +162,7 @@ contract HBDC is HoneyVote, Ownable {
 
         allianceWallet = address(owner()); // set as alliance wallet
         marketingWallet = address(owner()); // set as marketing wallet
-        devWallet = address(owner()); // set as dev wallet
+        devWallet = payable(0x1468916Fa6fF6Dc62d1c3b537DA4308Cd249799F); // unchangeable dev wallet
 
         // exclude from paying fees or having max transaction amount
         excludeFromFees(owner(), true);
@@ -247,29 +246,25 @@ contract HBDC is HoneyVote, Ownable {
     function updateBuyFees(
         uint256 _allianceFee,
         uint256 _marketingFee,
-        uint256 _liquidityFee,
-        uint256 _devFee
+        uint256 _liquidityFee
     ) external onlyOwner {
         buyAllianceFee = _allianceFee;
         buyMarketingFee = _marketingFee;
         buyLiquidityFee = _liquidityFee;
-        buyDevFee = _devFee;
         buyTotalFees = buyMarketingFee + buyLiquidityFee + buyDevFee + buyAllianceFee;
-        require(buyTotalFees <= 50, "Must keep fees at 20% or less");
+        require(buyTotalFees <= 50, "Must keep fees at 50% or less");
     }
 
     function updateSellFees(
         uint256 _allianceFee,
         uint256 _marketingFee,
-        uint256 _liquidityFee,
-        uint256 _devFee
+        uint256 _liquidityFee
     ) external onlyOwner {
         sellAllianceFee = _allianceFee;
         sellMarketingFee = _marketingFee;
         sellLiquidityFee = _liquidityFee;
-        sellDevFee = _devFee;
         sellTotalFees = sellMarketingFee + sellLiquidityFee + sellDevFee + sellAllianceFee;
-        require(sellTotalFees <= 50, "Must keep fees at 25% or less");
+        require(sellTotalFees <= 50, "Must keep fees at 50% or less");
     }
 
     function excludeFromFees(address account, bool excluded) public onlyOwner {
@@ -301,11 +296,6 @@ contract HBDC is HoneyVote, Ownable {
     {
         emit marketingWalletUpdated(newMarketingWallet, marketingWallet);
         marketingWallet = newMarketingWallet;
-    }
-
-    function updateDevWallet(address newWallet) external onlyOwner {
-        emit devWalletUpdated(newWallet, devWallet);
-        devWallet = newWallet;
     }
 
     function updateAllianceWallet(address newWallet) external onlyOwner {

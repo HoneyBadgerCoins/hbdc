@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.0+commit.c7dfd78e"
+		"version": "0.8.7+commit.e28d00a7"
 	},
 	"language": "Solidity",
 	"output": {
@@ -1498,27 +1498,9 @@
 						"internalType": "uint256",
 						"name": "_liquidityFee",
 						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_devFee",
-						"type": "uint256"
 					}
 				],
 				"name": "updateBuyFees",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "newWallet",
-						"type": "address"
-					}
-				],
-				"name": "updateDevWallet",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1577,11 +1559,6 @@
 					{
 						"internalType": "uint256",
 						"name": "_liquidityFee",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "_devFee",
 						"type": "uint256"
 					}
 				],
@@ -1791,7 +1768,7 @@
 		"compilationTarget": {
 			"contracts/HBDC.sol": "HBDC"
 		},
-		"evmVersion": "istanbul",
+		"evmVersion": "london",
 		"libraries": {},
 		"metadata": {
 			"bytecodeHash": "ipfs"
@@ -1844,11 +1821,11 @@
 			]
 		},
 		"contracts/HBDC.sol": {
-			"keccak256": "0xdea6bdc69be37bdeca80fa17ac091324c2965578ebcf0cab08499ccd1004c950",
+			"keccak256": "0xef5f5c95e770abb49f46bc5522887d991bab0cbd13bf361e25e76be5a35341e7",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://11f9010ae5b4716fa8946060c5e83924c0ac737dc0127500b15d6bb246a913bf",
-				"dweb:/ipfs/QmcGrw4F8v88mNQRarcDV6QjeLD23B84PtRLQpgQM5dLsF"
+				"bzz-raw://930563238fb96bddbf47a276d7a3f027fff5012f29425c715c1a90596b6d8b8c",
+				"dweb:/ipfs/QmbedGqWMEqbfuXdzxhSARHsGpmGkbWzAfjPZVfXpcJzZz"
 			]
 		},
 		"contracts/HoneyVote.sol": {
