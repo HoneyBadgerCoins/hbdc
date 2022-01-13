@@ -9,7 +9,7 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_oldHoneyBadgerAddress",
+						"name": "_honeyBadgerAddress",
 						"type": "address"
 					}
 				],
@@ -39,11 +39,11 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_honeyBadgerAddress",
+						"name": "_hbdcAddress",
 						"type": "address"
 					}
 				],
-				"name": "addHoneyBadgeraddress",
+				"name": "addHBDCaddress",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -64,6 +64,19 @@
 				"name": "addTokens",
 				"outputs": [],
 				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "hbdcAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -100,19 +113,6 @@
 						"internalType": "bool",
 						"name": "",
 						"type": "bool"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "oldHoneyBadgerAddress",
-				"outputs": [
-					{
-						"internalType": "address",
-						"name": "",
-						"type": "address"
 					}
 				],
 				"stateMutability": "view",
@@ -167,6 +167,13 @@
 					}
 				],
 				"name": "provideLockedLiquidity",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "reclaimGrumpies",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -236,7 +243,7 @@
 						"type": "uint256"
 					}
 				],
-				"name": "sellOldHoneyBadger",
+				"name": "sellHoneyBadger",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -278,7 +285,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/HoneyBadgerFuelTank.sol": "HoneyBadgerFuelTank"
+			"contracts/HoneyBadgerFuelTank.sol": "HoneyBadgerTank"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -317,11 +324,11 @@
 			]
 		},
 		"contracts/HoneyBadgerFuelTank.sol": {
-			"keccak256": "0xd350a3336013ce47ab1786de40d919224203af77d1a2a4314d17d78418d084aa",
+			"keccak256": "0xd211309cb29465a5d6e555fd4330f34c5dd81addd3d69c74c6416bee21408fb3",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://5fbfe785f7141bb1e99125cb1f6766bd5c18f7a12107af34d06bce50b4ba7ea1",
-				"dweb:/ipfs/QmdQyyUyfTsRasPwUg9dTw5kkayT3iDYNhF2xyAFY895Yd"
+				"bzz-raw://92bc31846a30475bc70fbbd749bc863c44b11709e48da5880478f2c1390adfb8",
+				"dweb:/ipfs/QmUwd7gPnPmURU4kDudBnuYVy46mESiHvJUNYyDQTb6D91"
 			]
 		},
 		"contracts/interfaces/IFuelTank.sol": {

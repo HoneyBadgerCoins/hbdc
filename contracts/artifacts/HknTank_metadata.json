@@ -9,7 +9,7 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_oldHoneyBadgerAddress",
+						"name": "_grumpyAddress",
 						"type": "address"
 					}
 				],
@@ -39,11 +39,11 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "_honeyBadgerAddress",
+						"name": "_meowDAOAddress",
 						"type": "address"
 					}
 				],
-				"name": "addHoneyBadgeraddress",
+				"name": "addMeowDAOaddress",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -68,7 +68,7 @@
 			},
 			{
 				"inputs": [],
-				"name": "honeyBadgerAddress",
+				"name": "grumpyAddress",
 				"outputs": [
 					{
 						"internalType": "address",
@@ -94,12 +94,12 @@
 			},
 			{
 				"inputs": [],
-				"name": "nozzleOpen",
+				"name": "meowDAOAddress",
 				"outputs": [
 					{
-						"internalType": "bool",
+						"internalType": "address",
 						"name": "",
-						"type": "bool"
+						"type": "address"
 					}
 				],
 				"stateMutability": "view",
@@ -107,12 +107,12 @@
 			},
 			{
 				"inputs": [],
-				"name": "oldHoneyBadgerAddress",
+				"name": "nozzleOpen",
 				"outputs": [
 					{
-						"internalType": "address",
+						"internalType": "bool",
 						"name": "",
-						"type": "address"
+						"type": "bool"
 					}
 				],
 				"stateMutability": "view",
@@ -147,7 +147,7 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "amountHBDCDesired",
+						"name": "amountMEOWDesired",
 						"type": "uint256"
 					},
 					{
@@ -157,7 +157,7 @@
 					},
 					{
 						"internalType": "uint256",
-						"name": "amountHBDCMin",
+						"name": "amountMEOWMin",
 						"type": "uint256"
 					},
 					{
@@ -167,6 +167,13 @@
 					}
 				],
 				"name": "provideLockedLiquidity",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "reclaimGrumpies",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -236,7 +243,7 @@
 						"type": "uint256"
 					}
 				],
-				"name": "sellOldHoneyBadger",
+				"name": "sellGrumpy",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -278,7 +285,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/HoneyBadgerFuelTank.sol": "HoneyBadgerFuelTank"
+			"contracts/HoneyBadgerFuelTank.sol": "HknTank"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -317,11 +324,11 @@
 			]
 		},
 		"contracts/HoneyBadgerFuelTank.sol": {
-			"keccak256": "0xd350a3336013ce47ab1786de40d919224203af77d1a2a4314d17d78418d084aa",
+			"keccak256": "0x92e636d32be56f567d4341da2b78fd4da1bbf148e32182058c34464205aec925",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://5fbfe785f7141bb1e99125cb1f6766bd5c18f7a12107af34d06bce50b4ba7ea1",
-				"dweb:/ipfs/QmdQyyUyfTsRasPwUg9dTw5kkayT3iDYNhF2xyAFY895Yd"
+				"bzz-raw://edad97177d940229eb1de9df7ed4792636da09e6881401b3d6dde92d87760d9c",
+				"dweb:/ipfs/QmW91PAmt4osoUnK41gtGN3meLrcYSzSW45HNE1pRRqHKU"
 			]
 		},
 		"contracts/interfaces/IFuelTank.sol": {
